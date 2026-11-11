@@ -1,0 +1,23 @@
+.buildpath
+.hgignore.swp
+.project
+.orig
+.swp
+.idea/
+.settings/
+.vscode/
+bin/
+**/.DS_Store
+gf
+main
+main.exe
+output/
+manifest/output/
+temp/
+temp.yaml
+bin
+**/config/config.yaml
+
+# 附件（图片 / 合同等，本地开发产物，不进版本库，保留目录占位）
+storage/file/*
+!storage/file/.gitkeep

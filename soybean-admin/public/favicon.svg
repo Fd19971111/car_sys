@@ -1,0 +1,13 @@
+<svg width="100%" height="100%" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ymj-favicon-bg" x1="6" y1="2" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E07A3F" />
+      <stop offset="1" stop-color="#A8400D" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#ymj-favicon-bg)" />
+  <path d="M13.5 31.5 32 15.5l18.5 16" stroke="#FFFFFF" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M19 30.5V48.5h26V30.5" stroke="#FFFFFF" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="23" y="34.5" width="6" height="6" rx="1.2" stroke="#FFFFFF" stroke-width="2.6" />
+  <path d="M34 48.5V39.6a1.9 1.9 0 0 1 1.9-1.9h5.2a1.9 1.9 0 0 1 1.9 1.9v8.9" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

@@ -1,0 +1,16 @@
+# CLI tool, only in development environment.
+# https://goframe.org/docs/cli          gf gen dao
+gfcli:
+  gen:
+    dao:
+      # 业务表在本地 yiminjia 库，生成到 model/default
+      - link: "mysql:root:root@tcp(127.0.0.1:3306)/yiminjia"
+        path: "./model/default"
+        group: "default"
+        tables: ""
+        descriptionTag: true
+
+  docker:
+    build: "-a amd64 -s linux -p temp -ew"
+    tagPrefixes:
+      - my.image.pub/my-app

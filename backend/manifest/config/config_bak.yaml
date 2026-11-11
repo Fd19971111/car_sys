@@ -1,0 +1,73 @@
+server:
+  address: ":8006"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+ws:
+  testApi: true # 是否开启 /ws/test 联调接口（测试页面 + 模拟推送），生产环境务必置 false
+  allowedOrigins: ["*"] # WebSocket 跨域白名单；设备直连一般不带 Origin，无需配置
+  eslPush: true # ESL 事件（识别文本/接通/挂断）下发设备总开关
+  eslServices: # ybd_service 业务白名单；当前业务只推 assistant
+    - assistant
+  eslPushPartial: true # 是否下发「识别中」临时文本（asr_progress，边说边显）
+  eslPartialIntervalMs: 200 # 识别中文本的合并窗口（毫秒）：窗口内的增量片段拼成一条下发；0=不合并
+  writeLog: "all" # 写帧日志：逐条记录每次下行帧写出（成功 Info / 失败 Warn），排障用；置 "off" 关闭（零开销）
+
+app:
+  playRootPath: "D:/WWW/zhiyuns_wlw/play" # 播放文件根路径，flow.url / flow.content 拼接此前缀
+  cdrWorkers: 3 # 话单录入的工作线程数
+  feeWorkers: 1 # 扣费工作线程数（当前单线程；后续提并发只需调大此值）
+  feeChainDepth: 2 # 扣费层级上限：2=商家+运营商（平台超管不扣费）；旧版为 3
+  authkey: "96252fe59d6bd793_"
+  vectorApiAddr: "127.0.0.1:8005" # 向量服务接口地址
+  cdrTestApi: true # 向量服务接口地
+  qwen:
+    workspaceId: "llm-asjmy0athlaywlgt" # 业务空间ID，内嵌到域名
+    region: "cn-beijing" # 地域，构造域名 {workspaceId}.{region}.maas.aliyuncs.com
+    apiKey: "sk-91f28fa63" # DASHSCOPE_API_KEY
+    model: "qwen3.6-flash"
+    timeout: 10 # 秒
+  session:
+    ttl: 1800 # 会话上下文过期秒数
+    maxHistory: 10 # 对话历史保留轮数
+  esl:
+    addr: "127.0.0.1:8021" # FreeSWITCH ESL 地址，生产环境需替换
+    password: "ClueCon"
+    poolSize: 4
+    exten: "7777" # 外呼拨号方案入口扩展号（FS dialplan 业务入口，联调确认）
+
+  webapi:                                          # ★ 新增这 4 行
+    baseUrl: "http://device.51sanu.com/webapi.php"
+    appid: "3033"
+    sign: "201801091170"
+  deviceApi: # 设备数据接口（quality_device / quality_device_ip），与登录接口可以是不同服务器
+    # 本地 dev：这两个 act 也在同一个 zhiyuns 项目里，先与登录接口一致；生产环境换成设备接口实际地址
+    baseUrl: "http://rc.51sanu.com/webapi.php"
+    appid: "3033"
+    sign: "201801091170"
+# https://goframe.org/docs/core/glog-config
+logger:
+  path: "/opt/gospace_chat/phoneAssistant/api/tmp/logs"
+  level: "all"
+  stdout: true
+
+# https://goframe.org/docs/core/gdb-config-file
+database:
+  default:
+    link: "mysql:root:root@tcp(127.0.0.1:3306)/yimijia"
+  chat:
+    link: "mysql:root:root@tcp(127.0.0.1:3306)/yimijia"
+
+# CLI tool, only in development environment.
+# https://goframe.org/docs/cli
+gfcli:
+  gen:
+    dao:
+      - link: "mysql:root:root@tcp(127.0.0.1:3306)/phone_assistant"
+        descriptionTag: true
+        # https://goframe.org/docs/nosql/gredis-config
+redis:
+  default:
+    address: "127.0.0.1:6379" # ip:port
+    db: 0 # 0 号库
+

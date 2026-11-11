@@ -1,0 +1,8 @@
+"C:\Users\Administrator\AppData\Local\Temp\gsessions\default" is not writable
+1. "C:\Users\Administrator\AppData\Local\Temp\gsessions\default" is not writable
+   1).  engineServ/internal/cmd.init.func1
+        D:/phpstudy_pro/WWW/yiminjia/backend/internal/cmd/cmd.go:92
+   2).  main.main
+        D:/phpstudy_pro/WWW/yiminjia/backend/main.go:12
+
+
