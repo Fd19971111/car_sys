@@ -10,18 +10,13 @@ type ListReq struct {
 
 	Current    int    `json:"current"    d:"1"  dc:"当前页码，默认 1"`
 	Size       int    `json:"size"       d:"10" dc:"每页条数，默认 10"`
-	Keyword    string `json:"keyword"          dc:"关键词：匹配项目名称 / 客户姓名 / 收款方 / 费用类型 / 备注"`
-	ProjectId  *int64 `json:"projectId"        dc:"所属项目ID"`
+	Keyword    string `json:"keyword"          dc:"关键词：收款方 / 费用类型 / 备注"`
 	PayoutType string `json:"payoutType"       dc:"费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他"`
-	Source     string `json:"source"            dc:"付款来源：purchase=采购付款 manual=其他付款"`
 }
 
 // PayoutListItem 付款记录列表行
 type PayoutListItem struct {
 	Id              int64   `json:"id"              dc:"付款记录ID"`
-	ProjectId       int64   `json:"projectId"       dc:"所属项目ID，0 表示公司公共支出"`
-	ProjectName     string  `json:"projectName"     dc:"项目名称"`
-	CustomerName    string  `json:"customerName"    dc:"客户姓名"`
 	Amount          float64 `json:"amount"          dc:"付款金额"`
 	PayoutType      string  `json:"payoutType"      dc:"费用类型"`
 	PayoutDate      string  `json:"payoutDate"      dc:"付款日期"`
@@ -50,10 +45,10 @@ type StatsReq struct {
 
 // StatsRes 付款概览统计响应
 type StatsRes struct {
-	TotalCount   int     `json:"totalCount"   dc:"付款笔数"`
-	TotalAmount  float64 `json:"totalAmount"  dc:"付款总额"`
-	MonthAmount  float64 `json:"monthAmount"  dc:"本月付款金额"`
-	ProjectCount int     `json:"projectCount" dc:"涉及项目数"`
+	TotalCount  int     `json:"totalCount"  dc:"付款笔数"`
+	TotalAmount float64 `json:"totalAmount" dc:"付款总额"`
+	MonthAmount float64 `json:"monthAmount" dc:"本月付款金额"`
+	MonthCount  int     `json:"monthCount"  dc:"本月付款笔数"`
 }
 
 // ===================== 付款记录详情 =====================
@@ -76,11 +71,6 @@ type LedgerEntryItem struct {
 // DetailRes 付款记录详情响应
 type DetailRes struct {
 	Id              int64              `json:"id"              dc:"付款记录ID"`
-	ProjectId       int64              `json:"projectId"       dc:"所属项目ID，0 表示公司公共支出"`
-	ProjectName     string             `json:"projectName"     dc:"项目名称"`
-	CustomerName    string             `json:"customerName"    dc:"客户姓名"`
-	ProjectAmount   float64            `json:"projectAmount"   dc:"所属项目合同金额"`
-	ProjectPaid     float64            `json:"projectPaid"     dc:"所属项目累计已付款"`
 	Amount          float64            `json:"amount"          dc:"本次付款金额"`
 	PayoutType      string             `json:"payoutType"      dc:"费用类型"`
 	PayoutDate      string             `json:"payoutDate"      dc:"付款日期"`
@@ -98,14 +88,12 @@ type DetailRes struct {
 
 // PayoutFormFields 付款记录表单公共字段
 type PayoutFormFields struct {
-	ProjectId       int64   `json:"projectId"     dc:"所属项目ID，0 表示公司公共支出"`
-	Amount          float64 `json:"amount"        v:"required|min:0.01#请输入付款金额|付款金额必须大于 0" dc:"付款金额（元）"`
-	PayoutType      string  `json:"payoutType"    v:"required|max-length:50#请选择费用类型|费用类型最多 50 个字符" dc:"费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他"`
-	PayoutDate      string  `json:"payoutDate"    v:"required#请选择付款日期"                                    dc:"付款日期（YYYY-MM-DD）"`
-	VendorName      string  `json:"vendorName"    v:"required|max-length:100#请填写收款方|收款方最多 100 个字符" dc:"收款方名称：供应商 / 工人 / 公司"`
-	PurchaseOrderId int64   `json:"purchaseOrderId" dc:"关联采购单ID，0 表示普通付款"`
-	FundAccountId   int64   `json:"fundAccountId" dc:"付款账户ID（财务已初始化时必填，决定贷记哪个资金科目）"`
-	Remark          string  `json:"remark"        v:"max-length:255#备注最多 255 个字符"                        dc:"备注"`
+	Amount        float64 `json:"amount"        v:"required|min:0.01#请输入付款金额|付款金额必须大于 0" dc:"付款金额（元）"`
+	PayoutType    string  `json:"payoutType"    v:"required|max-length:50#请选择费用类型|费用类型最多 50 个字符" dc:"费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他"`
+	PayoutDate    string  `json:"payoutDate"    v:"required#请选择付款日期"                                    dc:"付款日期（YYYY-MM-DD）"`
+	VendorName    string  `json:"vendorName"    v:"required|max-length:100#请填写收款方|收款方最多 100 个字符" dc:"收款方名称：供应商 / 工人 / 公司"`
+	FundAccountId int64   `json:"fundAccountId" dc:"付款账户ID（财务已初始化时必填，决定借记哪个资金科目）"`
+	Remark        string  `json:"remark"        v:"max-length:255#备注最多 255 个字符"                        dc:"备注"`
 }
 
 // CreateReq 新增付款记录请求

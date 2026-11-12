@@ -8,10 +8,9 @@ import (
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
-// ProjectPayout is the golang structure for table project_payout.
+// ProjectPayout is the golang structure for table payout.
 type ProjectPayout struct {
 	Id            int64       `json:"id"            orm:"id"              description:"主键"`                              // 主键
-	ProjectId     int64       `json:"projectId"     orm:"project_id"      description:"关联项目ID，0 表示公司公共支出"`               // 关联项目ID，0 表示公司公共支出
 	Amount        float64     `json:"amount"        orm:"amount"          description:"付款金额"`                            // 付款金额
 	PayoutType    string      `json:"payoutType"    orm:"payout_type"     description:"费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他"` // 费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他
 	PayoutDate    *gtime.Time `json:"payoutDate"    orm:"payout_date"     description:"付款日期"`                            // 付款日期

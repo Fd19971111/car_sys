@@ -9,11 +9,10 @@ import (
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
-// ProjectPayment is the golang structure of table project_payment for DAO operations like Where/Data.
+// ProjectPayment is the golang structure of table payment for DAO operations like Where/Data.
 type ProjectPayment struct {
-	g.Meta        `orm:"table:project_payment, do:true"`
+	g.Meta        `orm:"table:payment, do:true"`
 	Id            any         // 主键
-	ProjectId     any         // 关联项目ID
 	Amount        any         // 收款金额
 	PaymentType   any         // 款项类型：定金/首期款/中期款/尾款
 	PaymentDate   *gtime.Time // 收款日期

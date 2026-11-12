@@ -25,7 +25,7 @@ onMounted(load);
   <div class="report-page">
     <ReportToolbar
       v-model:year="year"
-      hint="收支、结余与资金余额按已记账凭证统计；回款按项目收款记录统计"
+      hint="收支、结余与资金余额按已记账凭证统计；回款按收款记录统计"
       :loading="overviewLoading"
       @refresh="load"
     />

@@ -7,7 +7,7 @@ import (
 )
 
 func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListRes, err error) {
-	list, projectCount, total, err := c.customer.List(ctx, req.Keyword, req.Source, req.Status, req.Current, req.Size)
+	list, total, err := c.customer.List(ctx, req.Keyword, req.Source, req.Status, req.Current, req.Size)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,6 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 			Source:       item.Source,
 			Status:       item.Status,
 			Remark:       item.Remark,
-			ProjectCount: projectCount[item.Id],
 			CreatedAt:    formatDateTime(item.CreatedAt),
 			UpdatedAt:    formatDateTime(item.UpdatedAt),
 		})

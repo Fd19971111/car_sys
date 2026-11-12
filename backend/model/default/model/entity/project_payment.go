@@ -8,10 +8,9 @@ import (
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
-// ProjectPayment is the golang structure for table project_payment.
+// ProjectPayment is the golang structure for table payment.
 type ProjectPayment struct {
 	Id            int64       `json:"id"            orm:"id"              description:"主键"`                     // 主键
-	ProjectId     int64       `json:"projectId"     orm:"project_id"      description:"关联项目ID"`                   // 关联项目ID
 	Amount        float64     `json:"amount"        orm:"amount"          description:"收款金额"`                     // 收款金额
 	PaymentType   string      `json:"paymentType"   orm:"payment_type"    description:"款项类型：定金/首期款/中期款/尾款"`      // 款项类型：定金/首期款/中期款/尾款
 	PaymentDate   *gtime.Time `json:"paymentDate"   orm:"payment_date"    description:"收款日期"`                     // 收款日期

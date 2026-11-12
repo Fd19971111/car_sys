@@ -7,7 +7,7 @@ import (
 )
 
 func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListRes, err error) {
-	list, total, err := c.payout.List(ctx, req.Keyword, req.ProjectId, req.PayoutType, req.Source, req.Current, req.Size)
+	list, total, err := c.payout.List(ctx, req.Keyword, req.PayoutType, req.Current, req.Size)
 	if err != nil {
 		return nil, err
 	}
@@ -17,9 +17,6 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 	for _, item := range list {
 		records = append(records, &v1.PayoutListItem{
 			Id:              item.Payout.Id,
-			ProjectId:       item.Payout.ProjectId,
-			ProjectName:     item.ProjectName,
-			CustomerName:    item.CustomerName,
 			Amount:          item.Payout.Amount,
 			PayoutType:      item.Payout.PayoutType,
 			PayoutDate:      formatDate(item.Payout.PayoutDate),

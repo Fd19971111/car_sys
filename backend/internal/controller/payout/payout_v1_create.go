@@ -14,14 +14,12 @@ func (c *ControllerV1) Create(ctx context.Context, req *v1.CreateReq) (res *v1.C
 	userId := gconv.Uint(ctx.Value(consts.CtxUserIdKey))
 
 	id, voucherNo, err := c.payout.Create(ctx, &payoutLogic.Form{
-		ProjectId:       req.ProjectId,
-		Amount:          req.Amount,
-		PayoutType:      req.PayoutType,
-		PayoutDate:      req.PayoutDate,
-		VendorName:      req.VendorName,
-		PurchaseOrderId: req.PurchaseOrderId,
-		FundAccountId:   req.FundAccountId,
-		Remark:          req.Remark,
+		Amount:        req.Amount,
+		PayoutType:    req.PayoutType,
+		PayoutDate:    req.PayoutDate,
+		VendorName:    req.VendorName,
+		FundAccountId: req.FundAccountId,
+		Remark:        req.Remark,
 	}, userId)
 	if err != nil {
 		return nil, err

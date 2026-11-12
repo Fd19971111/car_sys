@@ -531,7 +531,6 @@ declare namespace App {
           branchDesc: string;
           greeting: string;
           weatherDesc: string;
-          projectCount: string;
           todo: string;
           message: string;
           downloadCount: string;

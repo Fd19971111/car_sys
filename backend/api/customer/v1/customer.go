@@ -17,16 +17,15 @@ type ListReq struct {
 
 // CustomerListItem 客户列表行
 type CustomerListItem struct {
-	Id           uint   `json:"id"           dc:"客户ID"`
-	Name         string `json:"name"         dc:"客户姓名"`
-	Phone        string `json:"phone"        dc:"手机号"`
-	Address      string `json:"address"      dc:"房屋地址"`
-	Source       string `json:"source"       dc:"客户来源"`
-	Status       int    `json:"status"       dc:"客户状态：1=跟进中 2=已成交 3=已流失"`
-	Remark       string `json:"remark"       dc:"备注"`
-	ProjectCount int    `json:"projectCount" dc:"关联装修项目数量"`
-	CreatedAt    string `json:"createdAt"    dc:"创建时间"`
-	UpdatedAt    string `json:"updatedAt"    dc:"更新时间"`
+	Id        uint   `json:"id"           dc:"客户ID"`
+	Name      string `json:"name"         dc:"客户姓名"`
+	Phone     string `json:"phone"        dc:"手机号"`
+	Address   string `json:"address"      dc:"房屋地址"`
+	Source    string `json:"source"       dc:"客户来源"`
+	Status    int    `json:"status"       dc:"客户状态：1=跟进中 2=已成交 3=已流失"`
+	Remark    string `json:"remark"       dc:"备注"`
+	CreatedAt string `json:"createdAt"    dc:"创建时间"`
+	UpdatedAt string `json:"updatedAt"    dc:"更新时间"`
 }
 
 // ListRes 客户分页列表响应
@@ -62,31 +61,17 @@ type DetailReq struct {
 	Id uint `json:"id" v:"required#客户ID不能为空" dc:"客户ID"`
 }
 
-// CustomerProject 客户名下的装修项目（含负责人与最近一条进度）
-type CustomerProject struct {
-	Id               uint    `json:"id"               dc:"项目ID"`
-	Name             string  `json:"name"             dc:"项目名称"`
-	Status           int     `json:"status"           dc:"项目状态：1=待开工 2=施工中 3=已完工 4=已结算"`
-	Amount           float64 `json:"amount"          dc:"合同金额"`
-	ManagerName      string  `json:"managerName"      dc:"项目负责人姓名"`
-	StartDate        string  `json:"startDate"        dc:"开工日期"`
-	EndDate          string  `json:"endDate"          dc:"预计完工日期"`
-	LatestProgress   string  `json:"latestProgress"   dc:"最近一条进度记录"`
-	LatestProgressAt string  `json:"latestProgressAt" dc:"最近进度记录时间"`
-}
-
 // DetailRes 客户详情响应
 type DetailRes struct {
-	Id        uint               `json:"id"        dc:"客户ID"`
-	Name      string             `json:"name"      dc:"客户姓名"`
-	Phone     string             `json:"phone"     dc:"手机号"`
-	Address   string             `json:"address"   dc:"房屋地址"`
-	Source    string             `json:"source"    dc:"客户来源"`
-	Status    int                `json:"status"    dc:"客户状态：1=跟进中 2=已成交 3=已流失"`
-	Remark    string             `json:"remark"    dc:"备注"`
-	CreatedAt string             `json:"createdAt" dc:"创建时间"`
-	UpdatedAt string             `json:"updatedAt" dc:"更新时间"`
-	Projects  []*CustomerProject `json:"projects"  dc:"关联装修项目"`
+	Id        uint   `json:"id"        dc:"客户ID"`
+	Name      string `json:"name"      dc:"客户姓名"`
+	Phone     string `json:"phone"     dc:"手机号"`
+	Address   string `json:"address"   dc:"房屋地址"`
+	Source    string `json:"source"    dc:"客户来源"`
+	Status    int    `json:"status"    dc:"客户状态：1=跟进中 2=已成交 3=已流失"`
+	Remark    string `json:"remark"    dc:"备注"`
+	CreatedAt string `json:"createdAt" dc:"创建时间"`
+	UpdatedAt string `json:"updatedAt" dc:"更新时间"`
 }
 
 // ===================== 新增 / 编辑 / 删除 =====================

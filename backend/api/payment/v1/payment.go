@@ -10,17 +10,13 @@ type ListReq struct {
 
 	Current     int    `json:"current"     d:"1"  dc:"当前页码，默认 1"`
 	Size        int    `json:"size"        d:"10" dc:"每页条数，默认 10"`
-	Keyword     string `json:"keyword"           dc:"关键词：匹配项目名称 / 客户姓名 / 款项类型 / 备注"`
-	ProjectId   *int64 `json:"projectId"         dc:"所属项目ID"`
+	Keyword     string `json:"keyword"           dc:"关键词：款项类型 / 备注"`
 	PaymentType string `json:"paymentType"       dc:"款项类型：定金/首期款/中期款/尾款"`
 }
 
 // PaymentListItem 收款记录列表行
 type PaymentListItem struct {
 	Id              int64   `json:"id"              dc:"收款记录ID"`
-	ProjectId       int64   `json:"projectId"       dc:"所属项目ID"`
-	ProjectName     string  `json:"projectName"     dc:"项目名称"`
-	CustomerName    string  `json:"customerName"    dc:"客户姓名"`
 	Amount          float64 `json:"amount"          dc:"收款金额"`
 	PaymentType     string  `json:"paymentType"     dc:"款项类型"`
 	PaymentDate     string  `json:"paymentDate"     dc:"收款日期"`
@@ -48,10 +44,10 @@ type StatsReq struct {
 
 // StatsRes 收款概览统计响应
 type StatsRes struct {
-	TotalCount   int     `json:"totalCount"   dc:"收款笔数"`
-	TotalAmount  float64 `json:"totalAmount"  dc:"收款总额"`
-	MonthAmount  float64 `json:"monthAmount"  dc:"本月收款金额"`
-	ProjectCount int     `json:"projectCount" dc:"涉及项目数"`
+	TotalCount  int     `json:"totalCount"  dc:"收款笔数"`
+	TotalAmount float64 `json:"totalAmount" dc:"收款总额"`
+	MonthAmount float64 `json:"monthAmount" dc:"本月收款金额"`
+	MonthCount  int     `json:"monthCount"  dc:"本月收款笔数"`
 }
 
 // ===================== 收款记录详情 =====================
@@ -74,11 +70,6 @@ type LedgerEntryItem struct {
 // DetailRes 收款记录详情响应
 type DetailRes struct {
 	Id              int64              `json:"id"              dc:"收款记录ID"`
-	ProjectId       int64              `json:"projectId"       dc:"所属项目ID"`
-	ProjectName     string             `json:"projectName"     dc:"项目名称"`
-	CustomerName    string             `json:"customerName"    dc:"客户姓名"`
-	ProjectAmount   float64            `json:"projectAmount"   dc:"所属项目合同金额"`
-	PaidAmount      float64            `json:"paidAmount"      dc:"所属项目累计已收款"`
 	Amount          float64            `json:"amount"          dc:"本次收款金额"`
 	PaymentType     string             `json:"paymentType"     dc:"款项类型"`
 	PaymentDate     string             `json:"paymentDate"     dc:"收款日期"`
@@ -95,7 +86,6 @@ type DetailRes struct {
 
 // PaymentFormFields 收款记录表单公共字段
 type PaymentFormFields struct {
-	ProjectId     int64   `json:"projectId"     v:"required#请选择所属项目"                                    dc:"所属项目ID"`
 	Amount        float64 `json:"amount"        v:"required|min:0.01#请输入收款金额|收款金额必须大于 0" dc:"收款金额（元）"`
 	PaymentType   string  `json:"paymentType"   v:"required|max-length:50#请选择款项类型|款项类型最多 50 个字符" dc:"款项类型：定金/首期款/中期款/尾款"`
 	PaymentDate   string  `json:"paymentDate"   v:"required#请选择收款日期"                                    dc:"收款日期（YYYY-MM-DD）"`

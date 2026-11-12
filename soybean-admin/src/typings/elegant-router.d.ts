@@ -32,28 +32,23 @@ declare module "@elegant-router/types" {
     "finance_voucher": "/finance/voucher";
     "home": "/home";
     "iframe-page": "/iframe-page/:url";
-    "inventory": "/inventory";
-    "inventory_materials": "/inventory/materials";
-    "inventory_procurement": "/inventory/procurement";
-    "inventory_stock": "/inventory/stock";
-    "inventory_usages": "/inventory/usages";
-    "inventory_warehouse": "/inventory/warehouse";
     "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?";
-    "project": "/project";
-    "project_data": "/project/data";
-    "project_project-list": "/project/project-list";
-    "project_quote": "/project/quote";
+    "order": "/order";
+    "order_all": "/order/all";
+    "order_monitor": "/order/monitor";
     "report": "/report";
     "report_balance": "/report/balance";
     "report_flows": "/report/flows";
     "report_operation-log": "/report/operation-log";
     "report_overview": "/report/overview";
-    "report_profit": "/report/profit";
     "settings": "/settings";
     "settings_customer": "/settings/customer";
     "settings_menu": "/settings/menu";
     "settings_pricing": "/settings/pricing";
     "settings_print": "/settings/print";
+    "transport": "/transport";
+    "transport_driver": "/transport/driver";
+    "transport_vehicle": "/transport/vehicle";
   };
 
   /**
@@ -92,11 +87,11 @@ declare module "@elegant-router/types" {
     | "finance"
     | "home"
     | "iframe-page"
-    | "inventory"
     | "login"
-    | "project"
+    | "order"
     | "report"
     | "settings"
+    | "transport"
   >;
 
   /**
@@ -127,23 +122,18 @@ declare module "@elegant-router/types" {
     | "finance_setup"
     | "finance_voucher"
     | "home"
-    | "inventory_materials"
-    | "inventory_procurement"
-    | "inventory_stock"
-    | "inventory_usages"
-    | "inventory_warehouse"
-    | "project_data"
-    | "project_project-list"
-    | "project_quote"
+    | "order_all"
+    | "order_monitor"
     | "report_balance"
     | "report_flows"
     | "report_operation-log"
     | "report_overview"
-    | "report_profit"
     | "settings_customer"
     | "settings_menu"
     | "settings_pricing"
     | "settings_print"
+    | "transport_driver"
+    | "transport_vehicle"
   >;
 
   /**

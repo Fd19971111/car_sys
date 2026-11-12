@@ -412,9 +412,9 @@ func receiptSummary(in *Receipt) string {
 	case project != "":
 		return truncate("收到"+project+"项目款", summaryMaxRunes)
 	case paymentType != "":
-		return truncate("收到项目"+paymentType, summaryMaxRunes)
+		return truncate("收到"+paymentType, summaryMaxRunes)
 	default:
-		return "收到项目款"
+		return "收到款项"
 	}
 }
 

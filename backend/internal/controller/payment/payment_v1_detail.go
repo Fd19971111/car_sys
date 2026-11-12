@@ -15,7 +15,6 @@ func (c *ControllerV1) Detail(ctx context.Context, req *v1.DetailReq) (res *v1.D
 
 	res = &v1.DetailRes{
 		Id:              detail.Payment.Id,
-		ProjectId:       detail.Payment.ProjectId,
 		Amount:          detail.Payment.Amount,
 		PaymentType:     detail.Payment.PaymentType,
 		PaymentDate:     formatDate(detail.Payment.PaymentDate),
@@ -25,17 +24,7 @@ func (c *ControllerV1) Detail(ctx context.Context, req *v1.DetailReq) (res *v1.D
 		VoucherNo:       detail.VoucherNo,
 		Remark:          detail.Payment.Remark,
 		CreatedAt:       formatDateTime(detail.Payment.CreatedAt),
-		PaidAmount:      detail.PaidAmount,
 		LedgerEntries:   mapLedgerEntries(detail.Entries),
-	}
-
-	if detail.Project != nil {
-		res.ProjectName = detail.Project.Name
-		res.ProjectAmount = detail.Project.Amount
-	}
-
-	if detail.Customer != nil {
-		res.CustomerName = detail.Customer.Name
 	}
 
 	return res, nil

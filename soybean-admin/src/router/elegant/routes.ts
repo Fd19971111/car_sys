@@ -202,80 +202,6 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
-    name: 'inventory',
-    path: '/inventory',
-    component: 'layout.base',
-    meta: {
-      title: 'inventory',
-      i18nKey: 'route.inventory',
-      icon: 'mdi:package-variant-closed',
-      isAdmin: {},
-      order: 5
-    },
-    children: [
-      {
-        name: 'inventory_materials',
-        path: '/inventory/materials',
-        component: 'view.inventory_materials',
-        meta: {
-          title: 'inventory_materials',
-          i18nKey: 'route.inventory_materials',
-          icon: 'mdi:format-list-bulleted',
-          order: 1,
-          isAdmin: {}
-        }
-      },
-      {
-        name: 'inventory_procurement',
-        path: '/inventory/procurement',
-        component: 'view.inventory_procurement',
-        meta: {
-          title: 'inventory_procurement',
-          i18nKey: 'route.inventory_procurement',
-          icon: 'mdi:cart-outline',
-          order: 3,
-          isAdmin: {}
-        }
-      },
-      {
-        name: 'inventory_stock',
-        path: '/inventory/stock',
-        component: 'view.inventory_stock',
-        meta: {
-          title: 'inventory_stock',
-          i18nKey: 'route.inventory_stock',
-          icon: 'mdi:warehouse',
-          order: 4,
-          isAdmin: {}
-        }
-      },
-      {
-        name: 'inventory_usages',
-        path: '/inventory/usages',
-        component: 'view.inventory_usages',
-        meta: {
-          title: 'inventory_usages',
-          i18nKey: 'route.inventory_usages',
-          icon: 'mdi:clipboard-list-outline',
-          isAdmin: {},
-          order: 2
-        }
-      },
-      {
-        name: 'inventory_warehouse',
-        path: '/inventory/warehouse',
-        component: 'view.inventory_warehouse',
-        meta: {
-          title: 'inventory_warehouse',
-          i18nKey: 'route.inventory_warehouse',
-          icon: 'mdi:home-warehouse',
-          isAdmin: {},
-          order: 5
-        }
-      }
-    ]
-  },
-  {
     name: 'login',
     path: '/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?',
     component: 'layout.blank$view.login',
@@ -291,51 +217,39 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
-    name: 'project',
-    path: '/project',
+    name: 'order',
+    path: '/order',
     component: 'layout.base',
     meta: {
-      title: 'project',
-      i18nKey: 'route.project',
-      icon: 'mdi:home-city-outline',
+      title: 'order',
+      i18nKey: 'route.order',
+      icon: 'mdi:clipboard-text-clock-outline',
       isAdmin: {},
       order: 2
     },
     children: [
       {
-        name: 'project_data',
-        path: '/project/data',
-        component: 'view.project_data',
+        name: 'order_all',
+        path: '/order/all',
+        component: 'view.order_all',
         meta: {
-          title: 'project_data',
-          i18nKey: 'route.project_data',
-          icon: 'mdi:folder-open-outline',
-          order: 2,
-          isAdmin: {}
-        }
-      },
-      {
-        name: 'project_project-list',
-        path: '/project/project-list',
-        component: 'view.project_project-list',
-        meta: {
-          title: 'project_project-list',
-          i18nKey: 'route.project_project-list',
-          icon: 'mdi:clipboard-text-outline',
+          title: 'order_all',
+          i18nKey: 'route.order_all',
+          icon: 'mdi:format-list-bulleted',
           isAdmin: {},
           order: 1
         }
       },
       {
-        name: 'project_quote',
-        path: '/project/quote',
-        component: 'view.project_quote',
+        name: 'order_monitor',
+        path: '/order/monitor',
+        component: 'view.order_monitor',
         meta: {
-          title: 'project_quote',
-          i18nKey: 'route.project_quote',
-          icon: 'mdi:file-document-edit-outline',
+          title: 'order_monitor',
+          i18nKey: 'route.order_monitor',
+          icon: 'mdi:map-marker-path',
           isAdmin: {},
-          order: 3
+          order: 2
         }
       }
     ]
@@ -399,18 +313,6 @@ export const generatedRoutes: GeneratedRoute[] = [
           isAdmin: {},
           order: 1
         }
-      },
-      {
-        name: 'report_profit',
-        path: '/report/profit',
-        component: 'view.report_profit',
-        meta: {
-          title: 'report_profit',
-          i18nKey: 'route.report_profit',
-          icon: 'mdi:chart-line',
-          isAdmin: {},
-          order: 4
-        }
       }
     ]
   },
@@ -472,6 +374,44 @@ export const generatedRoutes: GeneratedRoute[] = [
           icon: '',
           isAdmin: {},
           order: null
+        }
+      }
+    ]
+  },
+  {
+    name: 'transport',
+    path: '/transport',
+    component: 'layout.base',
+    meta: {
+      title: 'transport',
+      i18nKey: 'route.transport',
+      icon: 'mdi:steering',
+      isAdmin: {},
+      order: 4
+    },
+    children: [
+      {
+        name: 'transport_driver',
+        path: '/transport/driver',
+        component: 'view.transport_driver',
+        meta: {
+          title: 'transport_driver',
+          i18nKey: 'route.transport_driver',
+          icon: 'mdi:account-tie-outline',
+          isAdmin: {},
+          order: 1
+        }
+      },
+      {
+        name: 'transport_vehicle',
+        path: '/transport/vehicle',
+        component: 'view.transport_vehicle',
+        meta: {
+          title: 'transport_vehicle',
+          i18nKey: 'route.transport_vehicle',
+          icon: 'mdi:car-outline',
+          isAdmin: {},
+          order: 2
         }
       }
     ]

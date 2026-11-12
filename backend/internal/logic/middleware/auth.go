@@ -45,20 +45,19 @@ func checkModulePermission(r *ghttp.Request, userId, role, companyId uint) error
 	}
 
 	// 前缀 → 允许的菜单路由名。一个前缀可能对应多个菜单：
-	// 例如「项目列表」和「项目资料」共用 /apiv1/project/ 前缀，授予任一即可访问。
+	// 例如「全部订单」和「行程监控」共用 /apiv1/order/ 前缀，授予任一即可访问。
 	moduleRules := []struct {
 		prefix string
 		routes []string
 	}{
 		{"/apiv1/customer/", []string{"settings_customer"}},
-		{"/apiv1/project/", []string{"project_project-list", "project_data"}},
-		{"/apiv1/quote/", []string{"project_quote"}},
+		{"/apiv1/order/", []string{"order_all", "order_monitor"}},
 		{"/apiv1/payment/", []string{"finance_payment"}},
 		{"/apiv1/payout/", []string{"finance_payout"}},
 		{"/apiv1/fin-voucher/", []string{"finance_voucher"}},
 		{"/apiv1/menu/", []string{"settings_menu"}},
 		{"/apiv1/pricing-rule/", []string{"settings_pricing"}},
-		{"/apiv1/inventory/", []string{"inventory_stock", "inventory_materials", "inventory_usages", "inventory_procurement", "inventory_warehouse"}},
+		{"/apiv1/transport/", []string{"transport_driver", "transport_vehicle"}},
 	}
 
 	for _, rule := range moduleRules {

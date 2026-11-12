@@ -15,7 +15,6 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/glog"
-	"github.com/gogf/gf/v2/os/gtime"
 	"github.com/gogf/gf/v2/util/gconv"
 )
 
@@ -26,14 +25,7 @@ const (
 	statusLost      = 3 // 已流失
 )
 
-// ProjectInfo 客户详情中的装修项目信息（project 子表 + site_user 负责人 + project_log 最近进度）
-type ProjectInfo struct {
-	Project          *defaultEntity.Project
-	ManagerName      string
-	LatestProgress   string
-	LatestProgressAt *gtime.Time
-}
-
+// Customer 客户服务。
 type Customer struct{}
 
 func New() *Customer {
@@ -49,7 +41,7 @@ func (c *Customer) List(
 	status *int,
 	current int,
 	size int,
-) (list []*defaultEntity.Customer, projectCount map[uint]int, total int, err error) {
+) (list []*defaultEntity.Customer, total int, err error) {
 	cols := defaultDao.Customer.Columns()
 	model := defaultDao.Customer.Ctx(ctx).Where("company_id", currentCompanyId(ctx))
 	if !isSuperUser(ctx) {
@@ -83,12 +75,10 @@ func (c *Customer) List(
 		ScanAndCount(&list, &total, false)
 	if err != nil {
 		glog.Errorf(ctx, "查询客户分页列表失败: %v", err)
-		return nil, nil, 0, gerror.New("查询客户列表失败，请稍后重试")
+		return nil, 0, gerror.New("查询客户列表失败，请稍后重试")
 	}
 
-	projectCount = c.batchProjectCount(ctx, list)
-
-	return list, projectCount, total, nil
+	return list, total, nil
 }
 
 // Stats 客户概览统计：各状态客户数量 + 已成交客户名下项目合同总金额。
@@ -134,48 +124,25 @@ func (c *Customer) Stats(ctx context.Context) (total, following, deal, lost int,
 		return
 	}
 
-	// 已成交客户（customer.status=2）名下未删除项目的合同金额合计
-	dealCustomerSubQuery := defaultDao.Customer.Ctx(ctx).
-		Where("company_id", currentCompanyId(ctx)).
-		Fields(cols.Id).
-		Where(cols.Status, statusDeal)
-	if !isSuperUser(ctx) {
-		dealCustomerSubQuery = dealCustomerSubQuery.Where("owner_user_id", currentUserId(ctx))
-	}
-
-	dealAmount, err = defaultDao.Project.Ctx(ctx).
-		Where("company_id", currentCompanyId(ctx)).
-		WhereIn(defaultDao.Project.Columns().CustomerId, dealCustomerSubQuery).
-		Sum(defaultDao.Project.Columns().Amount)
+	// 已成交客户（customer.status=2）名下已完成订单的最终费用合计
+	dealValue, err := g.DB().GetValue(ctx, `SELECT COALESCE(SUM(o.final_fare),0)
+		FROM ride_order o
+		INNER JOIN customer cu ON cu.id=o.customer_id
+		WHERE o.company_id=? AND o.deleted_at IS NULL AND o.status='completed'
+		  AND cu.company_id=? AND cu.deleted_at IS NULL AND cu.status=?`,
+		currentCompanyId(ctx), currentCompanyId(ctx), statusDeal)
 	if err != nil {
-		glog.Errorf(ctx, "统计成交合同金额失败: %v", err)
+		glog.Errorf(ctx, "统计成交订单金额失败: %v", err)
 		return 0, 0, 0, 0, 0, gerror.New("获取客户统计失败，请稍后重试")
 	}
+	dealAmount = dealValue.Float64()
 
 	return total, following, deal, lost, dealAmount, nil
 }
 
-// Detail 客户详情：客户本体 + 名下装修项目（含负责人姓名、最近一条施工进度）。
-func (c *Customer) Detail(ctx context.Context, id uint) (customer *defaultEntity.Customer, projects []*ProjectInfo, err error) {
-	customer, err = c.getCustomer(ctx, id)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var projectList []*defaultEntity.Project
-	err = defaultDao.Project.Ctx(ctx).
-		Where("company_id", currentCompanyId(ctx)).
-		Where(defaultDao.Project.Columns().CustomerId, id).
-		OrderAsc(defaultDao.Project.Columns().Id).
-		Scan(&projectList)
-	if err != nil {
-		glog.Errorf(ctx, "查询客户项目失败, customerId=%d: %v", id, err)
-		return nil, nil, gerror.New("获取客户详情失败，请稍后重试")
-	}
-
-	projects = c.attachProjectExtras(ctx, projectList)
-
-	return customer, projects, nil
+// Detail 客户详情。
+func (c *Customer) Detail(ctx context.Context, id uint) (customer *defaultEntity.Customer, err error) {
+	return c.getCustomer(ctx, id)
 }
 
 // Create 新增客户，返回新客户ID。
@@ -288,118 +255,6 @@ func currentCompanyId(ctx context.Context) uint {
 func isSuperUser(ctx context.Context) bool {
 	role := gconv.Uint(ctx.Value(consts.CtxRoleKey))
 	return role == 1 || role == 3
-}
-
-// batchProjectCount 批量统计客户名下项目数量，无项目的客户不出现于映射中。
-func (c *Customer) batchProjectCount(ctx context.Context, list []*defaultEntity.Customer) map[uint]int {
-	result := make(map[uint]int)
-
-	if len(list) == 0 {
-		return result
-	}
-
-	customerIds := make([]uint, 0, len(list))
-	for _, item := range list {
-		customerIds = append(customerIds, item.Id)
-	}
-
-	rows, err := defaultDao.Project.Ctx(ctx).
-		Where("company_id", currentCompanyId(ctx)).
-		Fields("customer_id, COUNT(*) AS total").
-		WhereIn(defaultDao.Project.Columns().CustomerId, customerIds).
-		Group(defaultDao.Project.Columns().CustomerId).
-		All()
-	if err != nil {
-		// 项目数量仅用于展示，统计失败不阻断列表
-		glog.Errorf(ctx, "统计客户项目数量失败: %v", err)
-		return result
-	}
-
-	for _, row := range rows {
-		result[row["customer_id"].Uint()] = row["total"].Int()
-	}
-
-	return result
-}
-
-// attachProjectExtras 为项目列表补充负责人姓名（site_user）与最近一条进度（project_log）。
-func (c *Customer) attachProjectExtras(ctx context.Context, projects []*defaultEntity.Project) []*ProjectInfo {
-	result := make([]*ProjectInfo, 0, len(projects))
-	if len(projects) == 0 {
-		return result
-	}
-
-	projectIds := make([]uint, 0, len(projects))
-	managerIds := make([]uint, 0, len(projects))
-	managerIdSet := make(map[uint]struct{})
-
-	for _, project := range projects {
-		projectIds = append(projectIds, project.Id)
-
-		if project.ManagerId > 0 {
-			if _, ok := managerIdSet[project.ManagerId]; !ok {
-				managerIdSet[project.ManagerId] = struct{}{}
-				managerIds = append(managerIds, project.ManagerId)
-			}
-		}
-	}
-
-	// 负责人姓名映射
-	managerNames := make(map[uint]string)
-	if len(managerIds) > 0 {
-		var users []*defaultEntity.SiteUser
-		if err := defaultDao.SiteUser.Ctx(ctx).Where("company_id", currentCompanyId(ctx)).WhereIn(defaultDao.SiteUser.Columns().Id, managerIds).Scan(&users); err != nil {
-			glog.Errorf(ctx, "查询项目负责人失败, managerIds=%v: %v", managerIds, err)
-		} else {
-			for _, user := range users {
-				managerNames[user.Id] = firstNonEmpty(user.Nickname, user.Username)
-			}
-		}
-	}
-
-	// 最近进度：按业务日期倒序批量取出，遍历时每个项目只保留第一条
-	latestLogs := make(map[uint]*defaultEntity.ProjectLog)
-	logs, err := defaultDao.ProjectLog.Ctx(ctx).
-		Where("company_id", currentCompanyId(ctx)).
-		WhereIn(defaultDao.ProjectLog.Columns().ProjectId, projectIds).
-		OrderDesc(defaultDao.ProjectLog.Columns().LogDate).
-		OrderDesc(defaultDao.ProjectLog.Columns().Id).
-		All()
-	if err != nil {
-		// 进度仅用于展示，查询失败不阻断详情
-		glog.Errorf(ctx, "查询项目最近进度失败, projectIds=%v: %v", projectIds, err)
-	} else {
-		for _, row := range logs {
-			var logRow defaultEntity.ProjectLog
-			if err = row.Struct(&logRow); err != nil {
-				continue
-			}
-
-			if _, ok := latestLogs[logRow.ProjectId]; !ok {
-				latestLogs[logRow.ProjectId] = &logRow
-			}
-		}
-	}
-
-	for _, project := range projects {
-		info := &ProjectInfo{
-			Project:     project,
-			ManagerName: managerNames[project.ManagerId],
-		}
-
-		if logRow, ok := latestLogs[project.Id]; ok {
-			info.LatestProgress = logRow.Content
-			// 展示业务日期（进度发生日），历史补录的进度不会错显示为当天
-			info.LatestProgressAt = logRow.LogDate
-			if info.LatestProgressAt == nil {
-				info.LatestProgressAt = logRow.CreatedAt
-			}
-		}
-
-		result = append(result, info)
-	}
-
-	return result
 }
 
 func firstNonEmpty(values ...string) string {

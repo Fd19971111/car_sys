@@ -36,14 +36,6 @@ export const CUSTOMER_SOURCE_OPTIONS: CommonType.Option<string, string>[] = [
   { value: '其他', label: '其他' }
 ];
 
-/** 装修项目状态元信息：1=待开工 2=施工中 3=已完工 4=已结算 */
-export const PROJECT_STATUS_META: Record<Api.Customer.ProjectStatus, { label: string; tagType: NaiveUI.ThemeColor }> = {
-  1: { label: '待开工', tagType: 'default' },
-  2: { label: '施工中', tagType: 'info' },
-  3: { label: '已完工', tagType: 'success' },
-  4: { label: '已结算', tagType: 'primary' }
-};
-
 /** 获取客户状态元信息（容错兜底） */
 export function getCustomerStatusMeta(status: number): CustomerStatusMeta {
   return (
@@ -52,16 +44,6 @@ export function getCustomerStatusMeta(status: number): CustomerStatusMeta {
       tagType: 'default',
       color: 'primary',
       icon: 'mdi:help-circle-outline'
-    }
-  );
-}
-
-/** 获取项目状态元信息（容错兜底） */
-export function getProjectStatusMeta(status: number) {
-  return (
-    PROJECT_STATUS_META[status as Api.Customer.ProjectStatus] ?? {
-      label: '未知状态',
-      tagType: 'default' as NaiveUI.ThemeColor
     }
   );
 }

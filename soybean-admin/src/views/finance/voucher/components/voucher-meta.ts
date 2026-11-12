@@ -44,9 +44,8 @@ export function getPeriodStatusMeta(code?: string | null): TagMeta {
 /** 凭证来源 */
 export const SOURCE_TYPE_LABEL: Record<string, string> = {
   MANUAL: '手工录入',
-  PROJECT_PAYMENT: '项目收款',
-  PROJECT_PAYOUT: '项目付款',
-  PROJECT_QUOTE: '项目报价'
+  PROJECT_PAYMENT: '收款',
+  PROJECT_PAYOUT: '付款'
 };
 
 export function getSourceTypeLabel(type?: string | null) {

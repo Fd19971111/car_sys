@@ -152,20 +152,6 @@ const columns: DataTableColumns<Api.Customer.Item> = [
     }
   },
   {
-    key: 'projectCount',
-    title: '关联项目',
-    width: 110,
-    render: row => {
-      const projectCount = row.projectCount ?? 0;
-
-      if (!projectCount) {
-        return h('span', { class: 'text-gray-400' }, '—');
-      }
-
-      return h('span', { class: 'text-primary' }, `${projectCount} 个`);
-    }
-  },
-  {
     key: 'createdAt',
     title: '创建时间',
     width: 150,

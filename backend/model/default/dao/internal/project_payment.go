@@ -11,7 +11,7 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 )
 
-// ProjectPaymentDao is the data access object for the table project_payment.
+// ProjectPaymentDao is the data access object for the table payment.
 type ProjectPaymentDao struct {
 	table    string                // table is the underlying table name of the DAO.
 	group    string                // group is the database configuration group name of the current DAO.
@@ -19,10 +19,9 @@ type ProjectPaymentDao struct {
 	handlers []gdb.ModelHandler    // handlers for customized model modification.
 }
 
-// ProjectPaymentColumns defines and stores column names for the table project_payment.
+// ProjectPaymentColumns defines and stores column names for the table payment.
 type ProjectPaymentColumns struct {
 	Id            string // 主键
-	ProjectId     string // 关联项目ID
 	Amount        string // 收款金额
 	PaymentType   string // 款项类型：定金/首期款/中期款/尾款
 	PaymentDate   string // 收款日期
@@ -33,10 +32,9 @@ type ProjectPaymentColumns struct {
 	DeletedAt     string // 软删除时间，NULL表示未删除
 }
 
-// projectPaymentColumns holds the columns for the table project_payment.
+// projectPaymentColumns holds the columns for the table payment.
 var projectPaymentColumns = ProjectPaymentColumns{
 	Id:            "id",
-	ProjectId:     "project_id",
 	Amount:        "amount",
 	PaymentType:   "payment_type",
 	PaymentDate:   "payment_date",
@@ -51,7 +49,7 @@ var projectPaymentColumns = ProjectPaymentColumns{
 func NewProjectPaymentDao(handlers ...gdb.ModelHandler) *ProjectPaymentDao {
 	return &ProjectPaymentDao{
 		group:    "default",
-		table:    "project_payment",
+		table:    "payment",
 		columns:  projectPaymentColumns,
 		handlers: handlers,
 	}

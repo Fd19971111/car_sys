@@ -2,35 +2,11 @@ declare namespace Api {
   /**
    * namespace Customer
    *
-   * backend api module: "customer"（对应后端 customer 表 / project 表）
+   * backend api module: "customer"（客户管理）
    */
   namespace Customer {
     /** 客户状态：1=跟进中 2=已成交 3=已流失 */
     type Status = 1 | 2 | 3;
-
-    /** 装修项目状态：1=待开工 2=施工中 3=已完工 4=已结算 */
-    type ProjectStatus = 1 | 2 | 3 | 4;
-
-    /** 客户名下的装修项目（详情展示用） */
-    interface RelatedProject {
-      id: number;
-      /** 项目名称 */
-      name: string;
-      /** 项目状态：1=待开工 2=施工中 3=已完工 4=已结算 */
-      status: ProjectStatus;
-      /** 合同金额 */
-      amount: number;
-      /** 项目负责人 */
-      managerName: string;
-      /** 开工日期 */
-      startDate: string | null;
-      /** 预计完工日期 */
-      endDate: string | null;
-      /** 最近一条进度记录 */
-      latestProgress?: string;
-      /** 最近进度记录时间 */
-      latestProgressAt?: string;
-    }
 
     /** 客户信息 */
     interface Item {
@@ -51,20 +27,6 @@ declare namespace Api {
       createdAt: string;
       /** 更新时间 */
       updatedAt: string;
-      /**
-       * 关联装修项目数量
-       *
-       * - 列表接口返回（后端按 project 子表实时统计）
-       * - 详情接口可以不返回
-       */
-      projectCount?: number;
-      /**
-       * 关联的装修项目
-       *
-       * - 列表接口不返回；详情接口返回
-       * - 对应后端 project 子表（customer_id 关联），进度来自 project_log 子表
-       */
-      projects?: RelatedProject[];
     }
 
     /** 客户列表查询参数 */

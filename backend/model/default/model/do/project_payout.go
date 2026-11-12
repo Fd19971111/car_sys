@@ -9,11 +9,10 @@ import (
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
-// ProjectPayout is the golang structure of table project_payout for DAO operations like Where/Data.
+// ProjectPayout is the golang structure of table payout for DAO operations like Where/Data.
 type ProjectPayout struct {
-	g.Meta        `orm:"table:project_payout, do:true"`
+	g.Meta        `orm:"table:payout, do:true"`
 	Id            any         // 主键
-	ProjectId     any         // 关联项目ID，0 表示公司公共支出
 	Amount        any         // 付款金额
 	PayoutType    any         // 费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他
 	PayoutDate    *gtime.Time // 付款日期

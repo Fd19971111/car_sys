@@ -389,17 +389,17 @@ func (s *Service) fillReceivable(ctx context.Context, overview *Overview) error 
 	return nil
 }
 
-// fillContract 统计项目合同与回款情况，让不懂财务的人也能看懂回款进度。
+// fillContract 统计订单金额与回款情况，让不懂财务的人也能看懂回款进度。
 func (s *Service) fillContract(ctx context.Context, overview *Overview) error {
-	contract, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM project WHERE deleted_at IS NULL")
+	contract, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(quoted_fare),0) FROM ride_order WHERE deleted_at IS NULL AND status<>'cancelled'")
 	if err != nil {
-		return gerror.Wrap(err, "统计合同总额失败")
+		return gerror.Wrap(err, "统计订单总额失败")
 	}
-	received, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM project_payment WHERE deleted_at IS NULL")
+	received, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM payment WHERE deleted_at IS NULL")
 	if err != nil {
 		return gerror.Wrap(err, "统计收款总额失败")
 	}
-	yearReceived, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM project_payment WHERE deleted_at IS NULL AND YEAR(payment_date)=?", overview.Year)
+	yearReceived, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM payment WHERE deleted_at IS NULL AND YEAR(payment_date)=?", overview.Year)
 	if err != nil {
 		return gerror.Wrap(err, "统计本年收款失败")
 	}

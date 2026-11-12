@@ -14,7 +14,6 @@ func (c *ControllerV1) Create(ctx context.Context, req *v1.CreateReq) (res *v1.C
 	userId := gconv.Uint(ctx.Value(consts.CtxUserIdKey))
 
 	id, voucherNo, err := c.payment.Create(ctx, &paymentLogic.Form{
-		ProjectId:     req.ProjectId,
 		Amount:        req.Amount,
 		PaymentType:   req.PaymentType,
 		PaymentDate:   req.PaymentDate,

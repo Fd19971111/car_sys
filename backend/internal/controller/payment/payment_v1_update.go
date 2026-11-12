@@ -14,7 +14,6 @@ func (c *ControllerV1) Update(ctx context.Context, req *v1.UpdateReq) (res *v1.U
 	userId := gconv.Uint(ctx.Value(consts.CtxUserIdKey))
 
 	voucherNo, err := c.payment.Update(ctx, req.Id, &paymentLogic.Form{
-		ProjectId:     req.ProjectId,
 		Amount:        req.Amount,
 		PaymentType:   req.PaymentType,
 		PaymentDate:   req.PaymentDate,
