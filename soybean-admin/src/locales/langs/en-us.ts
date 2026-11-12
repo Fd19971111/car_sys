@@ -1,6 +1,6 @@
 const local: App.I18n.Schema = {
   system: {
-    title: 'Yiminjia',
+    title: 'Qian Che Hui',
     updateTitle: 'System Version Update Notification',
     updateContent: 'A new version of the system has been detected. Do you want to refresh the page immediately?',
     updateConfirm: 'Refresh immediately',
@@ -232,7 +232,7 @@ const local: App.I18n.Schema = {
     home: 'Home',
     settings:'Settings',
     settings_customer:'Settings Customer ',
-    settings_supplier:'Supplier Management',
+    settings_pricing:'Pricing Rules',
     settings_menu:'Menu Management',
     settings_print:'Print Settings',
     enterprise:'Enterprise',

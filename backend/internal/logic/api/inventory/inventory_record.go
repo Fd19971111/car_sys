@@ -37,7 +37,7 @@ type MovementInput struct {
 	Quantity        float64
 	UnitPrice       float64
 	GenerateFinance bool // 仅入库使用：是否同步生成付款单
-	VendorId        int64
+	VendorName      string
 	FundAccountId   int64
 	RecordType      string // IN / OUT（仅补录使用）
 	Receiver        string
@@ -104,7 +104,7 @@ func (s *Service) StockIn(ctx context.Context, in *MovementInput, userId uint) (
 		amount := round2(in.Quantity * price)
 
 		if recordId, matErr = insertRecord(ctx, tx, mat, recordTypeIn, bizTypeNormal, in.Quantity, price, amount,
-			in.VendorId, in.FundAccountId, in.BizDate, in.Remark, userId); matErr != nil {
+			in.VendorName, in.FundAccountId, in.BizDate, in.Remark, userId); matErr != nil {
 			return matErr
 		}
 
@@ -120,7 +120,7 @@ func (s *Service) StockIn(ctx context.Context, in *MovementInput, userId uint) (
 				Amount:        amount,
 				PayoutType:    "材料款",
 				PayoutDate:    in.BizDate,
-				VendorId:      in.VendorId,
+				VendorName:    in.VendorName,
 				FundAccountId: in.FundAccountId,
 				Remark:        movementRemark("材料入库", mat, in.Quantity, in.Remark),
 			}, userId)
@@ -169,7 +169,7 @@ func (s *Service) StockOut(ctx context.Context, in *MovementInput, userId uint) 
 		amount := round2(in.Quantity * price)
 
 		if recordId, matErr = insertRecord(ctx, tx, mat, recordTypeOut, bizTypeNormal, in.Quantity, price, amount,
-			0, 0, in.BizDate, in.Remark, userId); matErr != nil {
+			"", 0, in.BizDate, in.Remark, userId); matErr != nil {
 			return matErr
 		}
 
@@ -209,7 +209,7 @@ func (s *Service) StockAdjust(ctx context.Context, in *MovementInput, userId uin
 			amount := round2(in.Quantity * price)
 
 			if recordId, matErr = insertRecord(ctx, tx, mat, recordTypeIn, bizTypeAdjust, in.Quantity, price, amount,
-				0, 0, in.BizDate, in.Remark, userId); matErr != nil {
+				"", 0, in.BizDate, in.Remark, userId); matErr != nil {
 				return matErr
 			}
 			if _, matErr = tx.Exec("UPDATE project_material SET quantity=quantity+?, amount=amount+? WHERE id=?",
@@ -231,7 +231,7 @@ func (s *Service) StockAdjust(ctx context.Context, in *MovementInput, userId uin
 
 		amount := round2(in.Quantity * mat.UnitPrice)
 		if recordId, matErr = insertRecord(ctx, tx, mat, recordTypeOut, bizTypeAdjust, in.Quantity, mat.UnitPrice, amount,
-			0, 0, in.BizDate, in.Remark, userId); matErr != nil {
+			"", 0, in.BizDate, in.Remark, userId); matErr != nil {
 			return matErr
 		}
 
@@ -284,7 +284,7 @@ func (s *Service) ListRecords(ctx context.Context, projectId, materialId int64, 
 			COALESCE(m.spec,'') AS spec,
 			COALESCE(m.unit,'') AS unit,
 			COALESCE(w.name,'') AS warehouse_name,
-			COALESCE(v.name,'') AS vendor_name,
+			COALESCE(r.vendor_name,'') AS vendor_name,
 			COALESCE(fa.account_name,'') AS fund_account_name,
 			COALESCE(po.voucher_id,0) AS payout_voucher_id,
 			COALESCE(pm.voucher_id,0) AS payment_voucher_id
@@ -292,7 +292,6 @@ func (s *Service) ListRecords(ctx context.Context, projectId, materialId int64, 
 		LEFT JOIN project p ON p.id=r.project_id
 		LEFT JOIN project_material m ON m.id=r.material_id
 		LEFT JOIN warehouse w ON w.id=r.warehouse_id AND w.deleted_at IS NULL
-		LEFT JOIN vendor v ON v.id=r.vendor_id
 		LEFT JOIN fin_fund_account fa ON fa.id=r.fund_account_id
 		LEFT JOIN project_payout po ON po.id=r.payout_id AND po.deleted_at IS NULL
 		LEFT JOIN project_payment pm ON pm.id=r.payment_id AND pm.deleted_at IS NULL
@@ -363,8 +362,8 @@ func validateFinanceOption(ctx context.Context, in *MovementInput) error {
 		return nil
 	}
 
-	if in.VendorId <= 0 {
-		return gerror.New("生成付款单时请选择供应商")
+	if strings.TrimSpace(in.VendorName) == "" {
+		return gerror.New("生成付款单时请填写供应商")
 	}
 	if in.FundAccountId <= 0 {
 		return gerror.New("生成付款单时请选择资金账户")
@@ -436,7 +435,7 @@ func insertUsage(ctx context.Context, tx gdb.TX, mat *materialRow, in *MovementI
 
 // insertRecord 写入出入库流水。
 func insertRecord(ctx context.Context, tx gdb.TX, mat *materialRow, recordType, bizType string,
-	quantity, unitPrice, amount float64, vendorId, fundAccountId int64, bizDate, remark string, userId uint,
+	quantity, unitPrice, amount float64, vendorName string, fundAccountId int64, bizDate, remark string, userId uint,
 ) (int64, error) {
 	date, err := parseBizDate(bizDate)
 	if err != nil {
@@ -445,10 +444,10 @@ func insertRecord(ctx context.Context, tx gdb.TX, mat *materialRow, recordType, 
 
 	result, err := tx.Exec(`INSERT INTO inventory_record
 		(company_id,project_id,material_id,warehouse_id,record_type,biz_type,quantity,unit_price,amount,
-		vendor_id,fund_account_id,biz_date,remark,created_by)
+		vendor_name,fund_account_id,biz_date,remark,created_by)
 		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		currentCompanyId(ctx), mat.ProjectId, mat.Id, mat.WarehouseId, recordType, bizType,
-		round2(quantity), round2(unitPrice), round2(amount), vendorId, fundAccountId,
+		round2(quantity), round2(unitPrice), round2(amount), strings.TrimSpace(vendorName), fundAccountId,
 		date.Format("2006-01-02"), strings.TrimSpace(remark), userId)
 	if err != nil {
 		glog.Errorf(ctx, "写入出入库流水失败, materialId=%d: %v", mat.Id, err)

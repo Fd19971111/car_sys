@@ -110,7 +110,7 @@ func (c *ControllerV1) StockIn(ctx context.Context, req *v1.StockInReq) (*v1.Sto
 		Quantity:        req.Quantity,
 		UnitPrice:       req.UnitPrice,
 		GenerateFinance: req.GenerateFinance,
-		VendorId:        req.VendorId,
+		VendorName:      req.VendorName,
 		FundAccountId:   req.FundAccountId,
 		BizDate:         req.BizDate,
 		Remark:          req.Remark,

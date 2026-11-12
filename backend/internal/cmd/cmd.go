@@ -16,11 +16,11 @@ import (
 	oplogController "engineServ/internal/controller/oplog"
 	"engineServ/internal/controller/payment"
 	"engineServ/internal/controller/payout"
+	pricingRuleController "engineServ/internal/controller/pricing_rule"
 	printController "engineServ/internal/controller/print"
 	"engineServ/internal/controller/project_data"
 	"engineServ/internal/controller/project_list"
 	"engineServ/internal/controller/quote"
-	vendorController "engineServ/internal/controller/vendor"
 	"engineServ/internal/controller/staff"
 	uploadController "engineServ/internal/controller/upload"
 	"engineServ/internal/controller/user"
@@ -91,7 +91,7 @@ var Main = gcmd.Command{
 					group.Bind(payment.NewV1())
 					group.Bind(payout.NewV1())
 					group.Bind(printController.NewV1())
-					group.Bind(vendorController.NewV1())
+					group.Bind(pricingRuleController.NewV1())
 					group.Bind(uploadController.NewAdminV1())
 				})
 			})

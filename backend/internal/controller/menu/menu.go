@@ -237,7 +237,7 @@ func allowedFrontendRoute(name, path, component string) bool {
 		"enterprise_user":       {"/enterprise/user", "view.enterprise_user"},
 		"settings":              {"/settings", "layout.base"},
 		"settings_customer":     {"/settings/customer", "view.settings_customer"},
-		"settings_supplier":     {"/settings/supplier", "view.settings_supplier"},
+		"settings_pricing":      {"/settings/pricing", "view.settings_pricing"},
 		"settings_menu":         {"/settings/menu", "view.settings_menu"},
 		"settings_print":        {"/settings/print", "view.settings_print"},
 	}

@@ -1,6 +1,6 @@
 const local: App.I18n.Schema = {
   system: {
-    title: '亿民家',
+    title: '黔车会',
     updateTitle: '系统版本更新通知',
     updateContent: '检测到系统有新版本发布，是否立即刷新页面？',
     updateConfirm: '立即刷新',
@@ -95,7 +95,7 @@ const local: App.I18n.Schema = {
         applySuccess: '预设应用成功',
         default: {
           name: '默认预设',
-          desc: '亿民家默认主题预设'
+          desc: '黔车会默认主题预设'
         },
         dark: {
           name: '暗色预设',
@@ -228,7 +228,7 @@ const local: App.I18n.Schema = {
     home: '首页',
     settings:'设置',
     settings_customer:'客户管理',
-    settings_supplier:'供应商',
+    settings_pricing:'计价配置',
     settings_menu:'菜单管理',
     settings_print:'打印设置',
     enterprise:'企业管理',

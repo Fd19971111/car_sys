@@ -1,34 +1,11 @@
 <template>
   <div class="app-logo">
     <svg width="100%" height="100%" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="ymj-logo-bg" x1="6" y1="2" x2="58" y2="62" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#E07A3F" />
-          <stop offset="1" stop-color="#A8400D" />
-        </linearGradient>
-      </defs>
-      <!-- 品牌底：暖木色渐变圆角方块 -->
-      <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#ymj-logo-bg)" />
-      <!-- 屋顶 -->
-      <path
-        d="M13.5 31.5 32 15.5l18.5 16"
-        stroke="#FFFFFF"
-        stroke-width="3.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <!-- 墙体 -->
-      <path
-        d="M19 30.5V48.5h26V30.5"
-        stroke="#FFFFFF"
-        stroke-width="3.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <!-- 窗 -->
-      <rect x="23" y="34.5" width="6" height="6" rx="1.2" stroke="#FFFFFF" stroke-width="2.6" />
-      <!-- 门 -->
-      <path d="M34 48.5V39.6a1.9 1.9 0 0 1 1.9-1.9h5.2a1.9 1.9 0 0 1 1.9 1.9v8.9" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="2" y="2" width="60" height="60" rx="16" fill="#1677D2" />
+      <path d="m11 37 3.4-8.5a5 5 0 0 1 4.7-3.2h7.1l4.3-5.2a5 5 0 0 1 3.9-1.9h7.4a5 5 0 0 1 4.1 2.2l3.8 5.3 4 1.3a4.5 4.5 0 0 1 3.1 4.3v8.2a3.5 3.5 0 0 1-3.5 3.5h-1.1a5.8 5.8 0 0 1-11.3 0H27.1a5.8 5.8 0 0 1-11.3 0h-1.3A3.5 3.5 0 0 1 11 39.5V37Z" fill="#FFFFFF" />
+      <path d="m28.7 25.3 3.6-4.4a2.8 2.8 0 0 1 2.2-1.1h7.3c.9 0 1.8.5 2.3 1.2l3 4.3H28.7Z" fill="#1677D2" />
+      <circle cx="21.4" cy="42.5" r="3" fill="#1677D2" />
+      <circle cx="45.1" cy="42.5" r="3" fill="#1677D2" />
     </svg>
   </div>
 </template>
@@ -38,6 +15,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 6px rgb(168 64 13 / 0.18));
+  filter: drop-shadow(0 2px 6px rgb(22 119 210 / 0.2));
 }
 </style>

@@ -45,7 +45,7 @@ const routeOptions = [
   { label: '项目利润', value: 'report_profit', path: '/report/profit', component: 'view.report_profit' },
   { label: '系统设置', value: 'settings', path: '/settings', component: 'layout.base' },
   { label: '客户管理', value: 'settings_customer', path: '/settings/customer', component: 'view.settings_customer' },
-  { label: '供应商管理', value: 'settings_supplier', path: '/settings/supplier', component: 'view.settings_supplier' },
+  { label: '计价配置', value: 'settings_pricing', path: '/settings/pricing', component: 'view.settings_pricing' },
   { label: '菜单管理', value: 'settings_menu', path: '/settings/menu', component: 'view.settings_menu' },
   { label: '企业管理', value: 'enterprise', path: '/enterprise', component: 'layout.base' },
   { label: '人员管理', value: 'enterprise_staff', path: '/enterprise/staff', component: 'view.enterprise_staff' },

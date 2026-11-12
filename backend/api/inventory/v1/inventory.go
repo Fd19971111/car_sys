@@ -105,7 +105,7 @@ type StockInReq struct {
 	Quantity        float64 `json:"quantity"        v:"required|gt:0#请填写入库数量|入库数量必须大于 0" dc:"入库数量"`
 	UnitPrice       float64 `json:"unitPrice"       v:"min:0#单价不能为负数"  dc:"入库单价，0 表示使用材料清单单价"`
 	GenerateFinance bool    `json:"generateFinance" dc:"是否生成付款单"`
-	VendorId        int64   `json:"vendorId"        dc:"供应商ID（生成付款单时必填）"`
+	VendorName      string  `json:"vendorName"      v:"max-length:100#供应商最多100个字符" dc:"供应商名称（生成付款单时必填）"`
 	FundAccountId   int64   `json:"fundAccountId"   dc:"资金账户ID（生成付款单时必填）"`
 	BizDate         string  `json:"bizDate"         v:"required#请选择入库日期" dc:"入库日期 YYYY-MM-DD"`
 	Remark          string  `json:"remark"          v:"max-length:255#备注最多 255 个字符" dc:"备注"`

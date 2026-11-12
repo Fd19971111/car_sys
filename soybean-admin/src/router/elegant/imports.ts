@@ -44,6 +44,6 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   report_profit: () => import("@/views/report/profit/index.vue"),
   settings_customer: () => import("@/views/settings/customer/index.vue"),
   settings_menu: () => import("@/views/settings/menu/index.vue"),
+  settings_pricing: () => import("@/views/settings/pricing/index.vue"),
   settings_print: () => import("@/views/settings/print/index.vue"),
-  settings_supplier: () => import("@/views/settings/supplier/index.vue"),
 };

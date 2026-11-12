@@ -23,7 +23,6 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 			Amount:          item.Payout.Amount,
 			PayoutType:      item.Payout.PayoutType,
 			PayoutDate:      formatDate(item.Payout.PayoutDate),
-			VendorId:        item.Payout.VendorId,
 			VendorName:      item.VendorName,
 			FundAccountId:   item.Payout.FundAccountId,
 			FundAccountName: item.FundAccountName,

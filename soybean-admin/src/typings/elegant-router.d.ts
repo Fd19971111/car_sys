@@ -52,8 +52,8 @@ declare module "@elegant-router/types" {
     "settings": "/settings";
     "settings_customer": "/settings/customer";
     "settings_menu": "/settings/menu";
+    "settings_pricing": "/settings/pricing";
     "settings_print": "/settings/print";
-    "settings_supplier": "/settings/supplier";
   };
 
   /**
@@ -142,8 +142,8 @@ declare module "@elegant-router/types" {
     | "report_profit"
     | "settings_customer"
     | "settings_menu"
+    | "settings_pricing"
     | "settings_print"
-    | "settings_supplier"
   >;
 
   /**

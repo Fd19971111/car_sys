@@ -4,7 +4,7 @@ export const themeSettings: App.Theme.ThemeSetting = {
   grayscale: false,
   colourWeakness: false,
   recommendColor: false,
-  themeColor: '#C05621',
+  themeColor: '#1677D2',
   themeRadius: 6,
   otherColor: {
     info: '#2080f0',
@@ -59,7 +59,7 @@ export const themeSettings: App.Theme.ThemeSetting = {
   },
   watermark: {
     visible: false,
-    text: '亿民家',
+    text: '黔车会',
     enableUserName: false,
     enableTime: false,
     timeFormat: 'YYYY-MM-DD HH:mm'
@@ -94,5 +94,5 @@ export const themeSettings: App.Theme.ThemeSetting = {
  * If publish new version, use `overrideThemeSettings` to override certain theme settings
  */
 export const overrideThemeSettings: Partial<App.Theme.ThemeSetting> = {
-  themeColor: '#C05621'
+  themeColor: '#1677D2'
 };

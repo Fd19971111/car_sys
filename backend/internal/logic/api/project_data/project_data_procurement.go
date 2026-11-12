@@ -37,7 +37,7 @@ func (s *Service) ListPurchaseOrders(ctx context.Context, projectId int64, curre
 
 	queryArgs := append(append([]interface{}{}, args...), (current-1)*size, size)
 	rows, err := g.DB().GetAll(ctx, fmt.Sprintf(`SELECT
-			po.id,po.order_no,po.project_id,COALESCE(p.name,'') AS project_name,po.material_id,po.vendor_id,
+			po.id,po.order_no,po.project_id,COALESCE(p.name,'') AS project_name,po.material_id,
 			DATE_FORMAT(po.purchase_date,'%%Y-%%m-%%d') AS purchase_date,po.material_name,
 			po.spec,po.unit,po.quantity,po.unit_price,po.tax_mode,po.tax_rate,po.net_amount,po.tax_amount,po.amount,po.supplier,po.remark,po.status,po.payout_id,po.created_by,
 			DATE_FORMAT(po.stocked_at,'%%Y-%%m-%%d %%H:%%i:%%s') AS stocked_at,
@@ -62,7 +62,7 @@ func (s *Service) ListPurchaseOrders(ctx context.Context, projectId int64, curre
 // ListPendingPurchaseOrders 查询付款管理可关联的待付款采购单。
 func (s *Service) ListPendingPurchaseOrders(ctx context.Context) ([]*PurchaseOrder, error) {
 	rows, err := g.DB().GetAll(ctx, `SELECT
-			po.id,po.order_no,po.project_id,COALESCE(p.name,'') AS project_name,po.material_id,po.vendor_id,
+			po.id,po.order_no,po.project_id,COALESCE(p.name,'') AS project_name,po.material_id,
 			DATE_FORMAT(po.purchase_date,'%Y-%m-%d') AS purchase_date,po.material_name,
 			po.spec,po.unit,po.quantity,po.unit_price,po.tax_mode,po.tax_rate,po.net_amount,po.tax_amount,po.amount,po.supplier,po.remark,po.status,po.payout_id,po.created_by,
 			DATE_FORMAT(po.stocked_at,'%Y-%m-%d %H:%i:%s') AS stocked_at,
@@ -84,7 +84,7 @@ func (s *Service) ListPendingPurchaseOrders(ctx context.Context) ([]*PurchaseOrd
 }
 
 // CreatePurchaseOrder 从项目材料创建待付款采购单。createdBy 记录创建人，用于限定只能由本人补做出入库。
-func (s *Service) CreatePurchaseOrder(ctx context.Context, projectId, materialId, vendorId int64, purchaseDate string, quantity, unitPrice float64, taxMode string, taxRate float64, remark string, createdBy uint) (int64, error) {
+func (s *Service) CreatePurchaseOrder(ctx context.Context, projectId, materialId int64, supplier string, purchaseDate string, quantity, unitPrice float64, taxMode string, taxRate float64, remark string, createdBy uint) (int64, error) {
 	if err := s.ensureProject(ctx, projectId); err != nil {
 		return 0, err
 	}
@@ -104,20 +104,13 @@ func (s *Service) CreatePurchaseOrder(ctx context.Context, projectId, materialId
 	if err := ValidateTaxSelection(taxMode, taxRate); err != nil {
 		return 0, err
 	}
-	if vendorId <= 0 {
-		return 0, gerror.New("请选择供应商")
+	supplier = strings.TrimSpace(supplier)
+	if supplier == "" {
+		return 0, gerror.New("请填写供应商")
 	}
 	purchaseAt, err := parseDate(purchaseDate, "请选择采购日期")
 	if err != nil {
 		return 0, err
-	}
-	vendor, err := g.DB().GetOne(ctx, "SELECT name FROM vendor WHERE id=? AND deleted_at IS NULL", vendorId)
-	if err != nil {
-		glog.Errorf(ctx, "读取采购供应商失败, vendorId=%d: %v", vendorId, err)
-		return 0, gerror.New("读取供应商信息失败，请稍后重试")
-	}
-	if vendor.IsEmpty() {
-		return 0, gerror.New("供应商不存在或已停用")
 	}
 
 	material, err := g.DB().GetOne(ctx, `SELECT name,spec,unit,supplier FROM project_material WHERE id=? AND deleted_at IS NULL`, materialId)
@@ -135,10 +128,10 @@ func (s *Service) CreatePurchaseOrder(ctx context.Context, projectId, materialId
 
 	orderNo := "PO" + time.Now().Format("20060102150405.000000000")
 	result, err := g.DB().Exec(ctx, `INSERT INTO project_purchase_order
-		(order_no,project_id,material_id,vendor_id,warehouse_id,purchase_date,material_name,spec,unit,quantity,unit_price,tax_mode,tax_rate,net_amount,tax_amount,amount,supplier,remark,status,confirmed_at,created_by)
-		VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?,?,?,?,'CONFIRMED',NOW(),?)`,
-		orderNo, projectId, materialId, vendorId, purchaseAt, material["name"].String(), material["spec"].String(), material["unit"].String(),
-		quantity, unitPrice, taxMode, round2(taxRate), amounts.NetAmount, amounts.TaxAmount, amounts.TotalAmount, vendor["name"].String(), strings.TrimSpace(remark), createdBy)
+		(order_no,project_id,material_id,warehouse_id,purchase_date,material_name,spec,unit,quantity,unit_price,tax_mode,tax_rate,net_amount,tax_amount,amount,supplier,remark,status,confirmed_at,created_by)
+		VALUES(?,?,?,0,?,?,?,?,?,?,?,?,?,?,?,?,?,'CONFIRMED',NOW(),?)`,
+		orderNo, projectId, materialId, purchaseAt, material["name"].String(), material["spec"].String(), material["unit"].String(),
+		quantity, unitPrice, taxMode, round2(taxRate), amounts.NetAmount, amounts.TaxAmount, amounts.TotalAmount, supplier, strings.TrimSpace(remark), createdBy)
 	if err != nil {
 		glog.Errorf(ctx, "创建采购单失败, projectId=%d materialId=%d: %v", projectId, materialId, err)
 		return 0, gerror.New("创建采购单失败，请稍后重试")
@@ -157,7 +150,6 @@ type PurchaseOrder struct {
 	ProjectId     int64
 	ProjectName   string
 	MaterialId    int64
-	VendorId      int64
 	PurchaseDate  string
 	MaterialName  string
 	Spec          string
@@ -185,7 +177,7 @@ func purchaseOrdersFromRows(rows gdb.Result) []*PurchaseOrder {
 	for _, row := range rows {
 		items = append(items, &PurchaseOrder{
 			Id: row["id"].Int64(), OrderNo: row["order_no"].String(), ProjectId: row["project_id"].Int64(), ProjectName: row["project_name"].String(),
-			VendorId: row["vendor_id"].Int64(), PurchaseDate: row["purchase_date"].String(),
+			PurchaseDate: row["purchase_date"].String(),
 			MaterialId: row["material_id"].Int64(), MaterialName: row["material_name"].String(), Spec: row["spec"].String(),
 			Unit: row["unit"].String(), Quantity: row["quantity"].Float64(), UnitPrice: row["unit_price"].Float64(),
 			TaxMode: row["tax_mode"].String(), TaxRate: row["tax_rate"].Float64(), NetAmount: row["net_amount"].Float64(), TaxAmount: row["tax_amount"].Float64(),

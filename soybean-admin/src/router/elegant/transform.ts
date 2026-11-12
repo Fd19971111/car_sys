@@ -198,8 +198,8 @@ const routeMap: RouteMap = {
   "settings": "/settings",
   "settings_customer": "/settings/customer",
   "settings_menu": "/settings/menu",
-  "settings_print": "/settings/print",
-  "settings_supplier": "/settings/supplier"
+  "settings_pricing": "/settings/pricing",
+  "settings_print": "/settings/print"
 };
 
 /**

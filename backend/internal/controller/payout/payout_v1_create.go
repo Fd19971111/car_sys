@@ -18,7 +18,7 @@ func (c *ControllerV1) Create(ctx context.Context, req *v1.CreateReq) (res *v1.C
 		Amount:          req.Amount,
 		PayoutType:      req.PayoutType,
 		PayoutDate:      req.PayoutDate,
-		VendorId:        req.VendorId,
+		VendorName:      req.VendorName,
 		PurchaseOrderId: req.PurchaseOrderId,
 		FundAccountId:   req.FundAccountId,
 		Remark:          req.Remark,

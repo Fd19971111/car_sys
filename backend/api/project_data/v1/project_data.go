@@ -194,7 +194,6 @@ type PurchaseOrderItem struct {
 	ProjectId     int64   `json:"projectId"`
 	ProjectName   string  `json:"projectName"`
 	MaterialId    int64   `json:"materialId"`
-	VendorId      int64   `json:"vendorId"`
 	PurchaseDate  string  `json:"purchaseDate"`
 	MaterialName  string  `json:"materialName"`
 	Spec          string  `json:"spec"`
@@ -233,7 +232,7 @@ type PurchaseOrderCreateReq struct {
 
 	ProjectId    int64   `json:"projectId" v:"required#请选择项目"`
 	MaterialId   int64   `json:"materialId" v:"required#请选择材料"`
-	VendorId     int64   `json:"vendorId" v:"required#请选择供应商"`
+	Supplier     string  `json:"supplier" v:"required|max-length:100#请填写供应商|供应商最多100个字符"`
 	PurchaseDate string  `json:"purchaseDate" v:"required#请选择采购日期"`
 	Quantity     float64 `json:"quantity" v:"required|min:0.01#请输入采购数量|采购数量必须大于 0"`
 	UnitPrice    float64 `json:"unitPrice" v:"min:0#采购单价不能为负数"`

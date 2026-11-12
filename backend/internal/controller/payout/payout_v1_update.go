@@ -18,7 +18,7 @@ func (c *ControllerV1) Update(ctx context.Context, req *v1.UpdateReq) (res *v1.U
 		Amount:        req.Amount,
 		PayoutType:    req.PayoutType,
 		PayoutDate:    req.PayoutDate,
-		VendorId:      req.VendorId,
+		VendorName:    req.VendorName,
 		FundAccountId: req.FundAccountId,
 		Remark:        req.Remark,
 	}, userId)

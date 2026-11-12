@@ -27,7 +27,7 @@ func (c *ControllerV1) PurchaseOrderPendingList(ctx context.Context, _ *v1.Purch
 }
 
 func (c *ControllerV1) PurchaseOrderCreate(ctx context.Context, req *v1.PurchaseOrderCreateReq) (*v1.PurchaseOrderCreateRes, error) {
-	id, err := c.data.CreatePurchaseOrder(ctx, req.ProjectId, req.MaterialId, req.VendorId, req.PurchaseDate,
+	id, err := c.data.CreatePurchaseOrder(ctx, req.ProjectId, req.MaterialId, req.Supplier, req.PurchaseDate,
 		req.Quantity, req.UnitPrice, req.TaxMode, req.TaxRate, req.Remark, gconv.Uint(ctx.Value(consts.CtxUserIdKey)))
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func purchaseOrderItems(items []*projectDataLogic.PurchaseOrder) []*v1.PurchaseO
 	for _, item := range items {
 		result = append(result, &v1.PurchaseOrderItem{
 			Id: item.Id, OrderNo: item.OrderNo, ProjectId: item.ProjectId, ProjectName: item.ProjectName,
-			MaterialId: item.MaterialId, VendorId: item.VendorId, PurchaseDate: item.PurchaseDate,
+			MaterialId: item.MaterialId, PurchaseDate: item.PurchaseDate,
 			MaterialName: item.MaterialName, Spec: item.Spec, Unit: item.Unit,
 			Quantity: item.Quantity, UnitPrice: item.UnitPrice, TaxMode: item.TaxMode, TaxRate: item.TaxRate,
 			NetAmount: item.NetAmount, TaxAmount: item.TaxAmount, Amount: item.Amount, Supplier: item.Supplier,

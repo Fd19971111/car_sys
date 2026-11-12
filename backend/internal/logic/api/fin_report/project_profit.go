@@ -480,10 +480,9 @@ func (s *Service) fillProfitReceipts(ctx context.Context, projectId int64, detai
 
 // fillProfitPayouts 项目付款明细（成本）。
 func (s *Service) fillProfitPayouts(ctx context.Context, projectId int64, detail *ProjectProfitDetail) error {
-	records, err := g.DB().GetAll(ctx, `SELECT p.id,p.payout_type,p.amount,COALESCE(v.name,'') AS vendor_name,p.remark,
+	records, err := g.DB().GetAll(ctx, `SELECT p.id,p.payout_type,p.amount,COALESCE(p.vendor_name,'') AS vendor_name,p.remark,
 			DATE_FORMAT(payout_date,'%Y-%m-%d') AS payout_date
 		FROM project_payout p
-		LEFT JOIN vendor v ON v.id=p.vendor_id
 		WHERE p.deleted_at IS NULL AND p.project_id=?
 		ORDER BY p.payout_date DESC,p.id DESC
 		LIMIT 200`, projectId)

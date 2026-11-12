@@ -51,7 +51,6 @@ type Form struct {
 	Amount          float64
 	PayoutType      string
 	PayoutDate      string
-	VendorId        int64
 	PurchaseOrderId int64
 	VendorName      string
 	FundAccountId   int64
@@ -193,7 +192,7 @@ func (p *Payout) Detail(ctx context.Context, id int64) (*DetailResult, error) {
 		Customer:   customer,
 		PaidAmount: roundAmount(paidAmount),
 	}
-	result.VendorName = p.vendorName(ctx, record.VendorId)
+	result.VendorName = record.VendorName
 
 	result.FundAccountName = p.fundAccountName(ctx, record.FundAccountId)
 	result.VoucherNo = p.voucherNo(ctx, record.VoucherId)
@@ -221,12 +220,6 @@ func (p *Payout) Create(ctx context.Context, form *Form, userId uint) (id int64,
 	}
 
 	err = defaultDao.ProjectPayout.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		vendorName, vendorErr := p.vendorNameTx(ctx, tx, form.VendorId)
-		if vendorErr != nil {
-			return vendorErr
-		}
-		form.VendorName = vendorName
-
 		// 超付校验：项目累计付款不能超过合同金额
 		if checkErr := p.ensureContractNotExceeded(ctx, tx, form.ProjectId, form.Amount, 0); checkErr != nil {
 			return checkErr
@@ -299,12 +292,6 @@ func (p *Payout) Update(ctx context.Context, id int64, form *Form, userId uint) 
 	data["company_id"] = currentCompanyId(ctx)
 
 	err = defaultDao.ProjectPayout.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		vendorName, vendorErr := p.vendorNameTx(ctx, tx, form.VendorId)
-		if vendorErr != nil {
-			return vendorErr
-		}
-		form.VendorName = vendorName
-
 		oldVoucherId, lockErr := p.lockVoucherId(ctx, tx, id, true)
 		if lockErr != nil {
 			return lockErr
@@ -562,8 +549,8 @@ func (f *Form) validate() error {
 	if strings.TrimSpace(f.PayoutType) == "" {
 		return gerror.New("请选择费用类型")
 	}
-	if f.VendorId <= 0 {
-		return gerror.New("请选择供应商")
+	if strings.TrimSpace(f.VendorName) == "" {
+		return gerror.New("请填写收款方")
 	}
 
 	return nil
@@ -583,7 +570,7 @@ func (f *Form) toData() (g.Map, error) {
 		cols.Amount:        f.Amount,
 		cols.PayoutType:    f.PayoutType,
 		cols.PayoutDate:    payoutDate,
-		cols.VendorId:      f.VendorId,
+		cols.VendorName:    strings.TrimSpace(f.VendorName),
 		cols.FundAccountId: f.FundAccountId,
 		cols.Remark:        f.Remark,
 	}, nil
@@ -599,24 +586,12 @@ func (p *Payout) matchPayoutIds(ctx context.Context, keyword string) ([]int64, e
 		return nil, err
 	}
 
-	vendorRows, err := g.DB().GetAll(ctx, "SELECT id FROM vendor WHERE name LIKE ? AND company_id=? AND deleted_at IS NULL", like, currentCompanyId(ctx))
-	if err != nil {
-		glog.Errorf(ctx, "按供应商名称查询付款记录失败: %v", err)
-		return nil, gerror.New("查询付款记录失败，请稍后重试")
-	}
-	vendorIds := make([]int64, 0, len(vendorRows))
-	for _, row := range vendorRows {
-		vendorIds = append(vendorIds, row["id"].Int64())
-	}
-
 	matchedModel := defaultDao.ProjectPayout.Ctx(ctx).
 		Where("company_id", currentCompanyId(ctx)).
 		Fields(cols.Id).
 		WhereLike(cols.PayoutType, like).
-		WhereOrLike(cols.Remark, like)
-	if len(vendorIds) > 0 {
-		matchedModel = matchedModel.WhereOrIn(cols.VendorId, vendorIds)
-	}
+		WhereOrLike(cols.Remark, like).
+		WhereOrLike(cols.VendorName, like)
 
 	if len(projectIds) > 0 {
 		matchedModel = matchedModel.WhereOrIn(cols.ProjectId, projectIds)
@@ -691,8 +666,6 @@ func (p *Payout) attach(ctx context.Context, records []*defaultEntity.ProjectPay
 	fundAccountIds := make([]int64, 0, len(records))
 	fundAccountSet := make(map[int64]struct{})
 	voucherIds := make([]int64, 0, len(records))
-	vendorIds := make([]int64, 0, len(records))
-	vendorIdSet := make(map[int64]struct{})
 
 	for _, record := range records {
 		if record.ProjectId > 0 {
@@ -710,17 +683,10 @@ func (p *Payout) attach(ctx context.Context, records []*defaultEntity.ProjectPay
 		if record.VoucherId > 0 {
 			voucherIds = append(voucherIds, record.VoucherId)
 		}
-		if record.VendorId > 0 {
-			if _, ok := vendorIdSet[record.VendorId]; !ok {
-				vendorIdSet[record.VendorId] = struct{}{}
-				vendorIds = append(vendorIds, record.VendorId)
-			}
-		}
 	}
 
 	projectNames, projectCustomers, customerNames := p.loadProjectMaps(ctx, projectIds)
 	fundAccountNames := p.fundAccountNames(ctx, fundAccountIds)
-	vendorNames := p.vendorNames(ctx, vendorIds)
 
 	voucherNos := make(map[int64]string, len(voucherIds))
 	if len(voucherIds) > 0 {
@@ -737,57 +703,13 @@ func (p *Payout) attach(ctx context.Context, records []*defaultEntity.ProjectPay
 			Payout:          record,
 			ProjectName:     projectNames[record.ProjectId],
 			CustomerName:    customerNames[projectCustomers[record.ProjectId]],
-			VendorName:      vendorNames[record.VendorId],
+			VendorName:      record.VendorName,
 			FundAccountName: fundAccountNames[record.FundAccountId],
 			VoucherNo:       voucherNos[record.VoucherId],
 		})
 	}
 
 	return result
-}
-
-func (p *Payout) vendorNames(ctx context.Context, ids []int64) map[int64]string {
-	names := make(map[int64]string, len(ids))
-	if len(ids) == 0 {
-		return names
-	}
-
-	rows, err := g.DB().Model("vendor").Ctx(ctx).Fields("id", "name").Where("company_id", currentCompanyId(ctx)).WhereIn("id", ids).All()
-	if err != nil {
-		glog.Errorf(ctx, "查询付款记录供应商名称失败, vendorIds=%v: %v", ids, err)
-		return names
-	}
-	for _, row := range rows {
-		names[row["id"].Int64()] = row["name"].String()
-	}
-	return names
-}
-
-func (p *Payout) vendorName(ctx context.Context, id int64) string {
-	if id <= 0 {
-		return ""
-	}
-	value, err := g.DB().Model("vendor").Ctx(ctx).Where("company_id", currentCompanyId(ctx)).Where("id", id).Value("name")
-	if err != nil {
-		glog.Errorf(ctx, "查询供应商名称失败, vendorId=%d: %v", id, err)
-		return ""
-	}
-	return value.String()
-}
-
-func (p *Payout) vendorNameTx(ctx context.Context, tx gdb.TX, id int64) (string, error) {
-	if id <= 0 {
-		return "", gerror.New("请选择供应商")
-	}
-	value, err := tx.GetValue("SELECT name FROM vendor WHERE id=? AND company_id=? AND deleted_at IS NULL", id, currentCompanyId(ctx))
-	if err != nil {
-		glog.Errorf(ctx, "校验付款供应商失败, vendorId=%d: %v", id, err)
-		return "", gerror.New("校验供应商失败，请稍后重试")
-	}
-	if value.IsEmpty() {
-		return "", gerror.New("供应商不存在或已删除")
-	}
-	return value.String(), nil
 }
 
 // loadProjectMaps 批量加载项目名称、项目所属客户、客户姓名。
@@ -1084,7 +1006,7 @@ func (p *Payout) loadPayoutSnapshot(ctx context.Context, id int64) *payoutSnapsh
 			Amount:        roundAmount(record["amount"].Float64()),
 			PayoutType:    record["payout_type"].String(),
 			PayoutDate:    record["payout_date"].String(),
-			VendorId:      record["vendor_id"].Int64(),
+			VendorName:    record["vendor_name"].String(),
 			FundAccountId: record["fund_account_id"].Int64(),
 			Remark:        record["remark"].String(),
 		},
@@ -1113,7 +1035,10 @@ func (p *Payout) logPayout(ctx context.Context, action string, id int64, form *F
 	}
 
 	projectName := p.projectNameText(ctx, form.ProjectId)
-	vendorName := p.vendorNameText(ctx, form.VendorId)
+	vendorName := strings.TrimSpace(form.VendorName)
+	if vendorName == "" {
+		vendorName = "未指定收款方"
+	}
 	label := oplog.ActionLabels[action]
 	if label == "" {
 		label = action
@@ -1133,7 +1058,6 @@ func (p *Payout) logPayout(ctx context.Context, action string, id int64, form *F
 			"amount":      roundAmount(form.Amount),
 			"payoutType":  form.PayoutType,
 			"payoutDate":  form.PayoutDate,
-			"vendorId":    form.VendorId,
 			"vendorName":  vendorName,
 			"voucherNo":   voucherNo,
 			"remark":      form.Remark,
@@ -1150,20 +1074,6 @@ func (p *Payout) projectNameText(ctx context.Context, projectId int64) string {
 	value, err := g.DB().GetValue(ctx, "SELECT name FROM project WHERE id=? AND deleted_at IS NULL", projectId)
 	if err != nil || value.IsEmpty() {
 		return fmt.Sprintf("项目 #%d", projectId)
-	}
-
-	return value.String()
-}
-
-// vendorNameText 收款方名称，取不到时给出占位。
-func (p *Payout) vendorNameText(ctx context.Context, vendorId int64) string {
-	if vendorId <= 0 {
-		return "未指定收款方"
-	}
-
-	value, err := g.DB().GetValue(ctx, "SELECT name FROM vendor WHERE id=? AND deleted_at IS NULL", vendorId)
-	if err != nil || value.IsEmpty() {
-		return fmt.Sprintf("供应商 #%d", vendorId)
 	}
 
 	return value.String()

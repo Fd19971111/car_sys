@@ -451,6 +451,18 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
+        name: 'settings_pricing',
+        path: '/settings/pricing',
+        component: 'view.settings_pricing',
+        meta: {
+          title: 'settings_pricing',
+          i18nKey: 'route.settings_pricing',
+          icon: 'mdi:taxi',
+          isAdmin: {},
+          order: 2
+        }
+      },
+      {
         name: 'settings_print',
         path: '/settings/print',
         component: 'view.settings_print',
@@ -460,18 +472,6 @@ export const generatedRoutes: GeneratedRoute[] = [
           icon: '',
           isAdmin: {},
           order: null
-        }
-      },
-      {
-        name: 'settings_supplier',
-        path: '/settings/supplier',
-        component: 'view.settings_supplier',
-        meta: {
-          title: 'settings_supplier',
-          i18nKey: 'route.settings_supplier',
-          icon: 'mdi:truck-outline',
-          isAdmin: {},
-          order: 2
         }
       }
     ]

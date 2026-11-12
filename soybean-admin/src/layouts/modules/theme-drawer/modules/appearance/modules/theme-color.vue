@@ -24,7 +24,7 @@ const swatches: string[] = [
   '#ef4444',
   '#ec4899',
   '#d946ef',
-  '#f97316',
+  '#0F4C81',
   '#f59e0b',
   '#eab308',
   '#84cc16',

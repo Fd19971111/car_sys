@@ -47,7 +47,7 @@ const isWatermarkTextVisible = computed(
         type="text"
         size="small"
         class="w-120px"
-        placeholder="亿民家"
+        placeholder="黔车会"
       />
     </SettingItem>
   </TransitionGroup>

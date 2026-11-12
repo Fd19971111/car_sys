@@ -17,7 +17,7 @@ type ProjectPayout struct {
 	Amount        any         // 付款金额
 	PayoutType    any         // 费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他
 	PayoutDate    *gtime.Time // 付款日期
-	VendorId      any         // 供应商ID
+	VendorName    any         // 收款方名称：供应商 / 工人 / 公司
 	FundAccountId any         // 付款资金账户ID，对应 fin_fund_account.id
 	VoucherId     any         // 自动生成的记账凭证ID，0 表示未记账
 	Remark        any         // 备注，如：转账、结算尾款

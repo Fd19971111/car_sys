@@ -57,7 +57,7 @@ func checkModulePermission(r *ghttp.Request, userId, role, companyId uint) error
 		{"/apiv1/payout/", []string{"finance_payout"}},
 		{"/apiv1/fin-voucher/", []string{"finance_voucher"}},
 		{"/apiv1/menu/", []string{"settings_menu"}},
-		{"/apiv1/vendor/", []string{"settings_vendor"}},
+		{"/apiv1/pricing-rule/", []string{"settings_pricing"}},
 		{"/apiv1/inventory/", []string{"inventory_stock", "inventory_materials", "inventory_usages", "inventory_procurement", "inventory_warehouse"}},
 	}
 

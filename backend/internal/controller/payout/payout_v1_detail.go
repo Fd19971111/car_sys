@@ -19,7 +19,6 @@ func (c *ControllerV1) Detail(ctx context.Context, req *v1.DetailReq) (res *v1.D
 		Amount:          detail.Payout.Amount,
 		PayoutType:      detail.Payout.PayoutType,
 		PayoutDate:      formatDate(detail.Payout.PayoutDate),
-		VendorId:        detail.Payout.VendorId,
 		VendorName:      detail.VendorName,
 		FundAccountId:   detail.Payout.FundAccountId,
 		FundAccountName: detail.FundAccountName,

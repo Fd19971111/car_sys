@@ -35,7 +35,6 @@ const (
 	ModuleProject  = "项目"
 	ModuleStock    = "库存"
 	ModuleCustomer = "客户"
-	ModuleVendor   = "供应商"
 )
 
 // 操作动作

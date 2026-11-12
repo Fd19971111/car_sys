@@ -189,7 +189,7 @@ onMounted(() => {
               </NFormItem>
 
               <NFormItem label="副标题">
-                <NInput v-model:value="model.subTitle" maxlength="120" placeholder="如：YIMINJIA DESIGN · 设计工程部（选填）" />
+                <NInput v-model:value="model.subTitle" maxlength="120" placeholder="如：黔车会 · 运营管理部（选填）" />
               </NFormItem>
 
               <NFormItem label="页脚文字">

@@ -30,7 +30,7 @@ func (s *Service) StockInPurchaseOrder(ctx context.Context, orderId, warehouseId
 	}
 
 	err = g.DB().Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		order, orderErr := tx.GetOne(`SELECT id,project_id,material_id,vendor_id,order_no,quantity,unit_price,
+		order, orderErr := tx.GetOne(`SELECT id,project_id,material_id,supplier,order_no,quantity,unit_price,
 				stocked_at,created_by,DATE_FORMAT(purchase_date,'%Y-%m-%d') AS purchase_date
 			FROM project_purchase_order
 			WHERE id=? AND company_id=? AND deleted_at IS NULL FOR UPDATE`, orderId, currentCompanyId(ctx))
@@ -89,7 +89,7 @@ func (s *Service) StockInPurchaseOrder(ctx context.Context, orderId, warehouseId
 			Quantity:    quantity,
 			UnitPrice:   price,
 			Amount:      amount,
-			VendorId:    order["vendor_id"].Int64(),
+			VendorName: order["supplier"].String(),
 			SourceType:  stockSourcePurchase,
 			SourceId:    orderId,
 			BizDate:     order["purchase_date"].String(),
@@ -213,7 +213,7 @@ type sourceRecordInput struct {
 	Quantity    float64
 	UnitPrice   float64
 	Amount      float64
-	VendorId    int64
+	VendorName  string
 	SourceType  string
 	SourceId    int64
 	BizDate     string
@@ -270,10 +270,10 @@ func insertSourceRecord(ctx context.Context, tx gdb.TX, in *sourceRecordInput) (
 
 	result, err := tx.Exec(`INSERT INTO inventory_record
 		(company_id,project_id,material_id,warehouse_id,record_type,biz_type,quantity,unit_price,amount,
-		vendor_id,fund_account_id,payout_id,payment_id,source_type,source_id,biz_date,remark,created_by)
+		vendor_name,fund_account_id,payout_id,payment_id,source_type,source_id,biz_date,remark,created_by)
 		VALUES(?,?,?,?,?,?,?,?,?,?,0,0,0,?,?,?,?,?)`,
 		currentCompanyId(ctx), in.ProjectId, in.MaterialId, in.WarehouseId, in.RecordType, "ADJUST",
-		in.Quantity, in.UnitPrice, in.Amount, in.VendorId,
+		in.Quantity, in.UnitPrice, in.Amount, in.VendorName,
 		in.SourceType, in.SourceId, bizDate, strings.TrimSpace(in.Remark), in.CreatedBy)
 	if err != nil {
 		glog.Errorf(ctx, "写入出入库流水失败, source=%s#%d: %v", in.SourceType, in.SourceId, err)

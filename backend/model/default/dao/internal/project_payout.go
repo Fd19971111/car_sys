@@ -26,7 +26,7 @@ type ProjectPayoutColumns struct {
 	Amount        string // 付款金额
 	PayoutType    string // 费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他
 	PayoutDate    string // 付款日期
-	VendorId      string // 供应商ID
+	VendorName    string // 收款方名称：供应商 / 工人 / 公司
 	FundAccountId string // 付款资金账户ID，对应 fin_fund_account.id
 	VoucherId     string // 自动生成的记账凭证ID，0 表示未记账
 	Remark        string // 备注，如：转账、结算尾款
@@ -41,7 +41,7 @@ var projectPayoutColumns = ProjectPayoutColumns{
 	Amount:        "amount",
 	PayoutType:    "payout_type",
 	PayoutDate:    "payout_date",
-	VendorId:      "vendor_id",
+	VendorName:    "vendor_name",
 	FundAccountId: "fund_account_id",
 	VoucherId:     "voucher_id",
 	Remark:        "remark",

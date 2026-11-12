@@ -25,8 +25,7 @@ type PayoutListItem struct {
 	Amount          float64 `json:"amount"          dc:"付款金额"`
 	PayoutType      string  `json:"payoutType"      dc:"费用类型"`
 	PayoutDate      string  `json:"payoutDate"      dc:"付款日期"`
-	VendorId        int64   `json:"vendorId"        dc:"供应商ID"`
-	VendorName      string  `json:"vendorName"      dc:"供应商名称"`
+	VendorName      string  `json:"vendorName"      dc:"收款方名称"`
 	FundAccountId   int64   `json:"fundAccountId"   dc:"付款账户ID"`
 	FundAccountName string  `json:"fundAccountName" dc:"付款账户（现金 / 银行）"`
 	VoucherNo       string  `json:"voucherNo"       dc:"自动生成的凭证号，空字符串表示未记账"`
@@ -85,8 +84,7 @@ type DetailRes struct {
 	Amount          float64            `json:"amount"          dc:"本次付款金额"`
 	PayoutType      string             `json:"payoutType"      dc:"费用类型"`
 	PayoutDate      string             `json:"payoutDate"      dc:"付款日期"`
-	VendorId        int64              `json:"vendorId"        dc:"供应商ID"`
-	VendorName      string             `json:"vendorName"      dc:"供应商名称"`
+	VendorName      string             `json:"vendorName"      dc:"收款方名称"`
 	FundAccountId   int64              `json:"fundAccountId"   dc:"付款账户ID"`
 	FundAccountName string             `json:"fundAccountName" dc:"付款账户（现金 / 银行）"`
 	VoucherId       int64              `json:"voucherId"       dc:"自动生成的凭证ID，0 表示未记账"`
@@ -104,7 +102,7 @@ type PayoutFormFields struct {
 	Amount          float64 `json:"amount"        v:"required|min:0.01#请输入付款金额|付款金额必须大于 0" dc:"付款金额（元）"`
 	PayoutType      string  `json:"payoutType"    v:"required|max-length:50#请选择费用类型|费用类型最多 50 个字符" dc:"费用类型：材料款/人工费/施工费/设计费/管理费/销售费/其他"`
 	PayoutDate      string  `json:"payoutDate"    v:"required#请选择付款日期"                                    dc:"付款日期（YYYY-MM-DD）"`
-	VendorId        int64   `json:"vendorId"      v:"required|min:1#请选择供应商" dc:"供应商ID"`
+	VendorName      string  `json:"vendorName"    v:"required|max-length:100#请填写收款方|收款方最多 100 个字符" dc:"收款方名称：供应商 / 工人 / 公司"`
 	PurchaseOrderId int64   `json:"purchaseOrderId" dc:"关联采购单ID，0 表示普通付款"`
 	FundAccountId   int64   `json:"fundAccountId" dc:"付款账户ID（财务已初始化时必填，决定贷记哪个资金科目）"`
 	Remark          string  `json:"remark"        v:"max-length:255#备注最多 255 个字符"                        dc:"备注"`
