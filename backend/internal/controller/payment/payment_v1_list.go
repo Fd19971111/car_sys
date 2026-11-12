@@ -17,6 +17,7 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 	for _, item := range list {
 		records = append(records, &v1.PaymentListItem{
 			Id:              item.Payment.Id,
+			RideOrderId:     item.Payment.RideOrderId,
 			Amount:          item.Payment.Amount,
 			PaymentType:     item.Payment.PaymentType,
 			PaymentDate:     formatDate(item.Payment.PaymentDate),

@@ -31,16 +31,20 @@ declare namespace Api {
       receivable: number;
       /** 应付账款余额 */
       payable: number;
-      /** 合同总额 */
-      contractAmount: number;
-      /** 累计回款 */
-      receivedAmount: number;
-      /** 所选年份回款 */
+      /** 所选年份完单车费 */
+      rideRevenue: number;
+      /** 所选年份关联行程收款 */
+      passengerPaid: number;
+      /** 所选年份所有收款 */
       yearReceived: number;
-      /** 待回款 */
-      unpaidAmount: number;
-      /** 回款率（%） */
-      receivedRate: number;
+      /** 完单待收车费余额 */
+      unpaidFare: number;
+      /** 司机待结余额 */
+      driverPayable: number;
+      /** 所选年份司机已结 */
+      driverSettled: number;
+      /** 所选年份司机应得 */
+      driverExpense: number;
     }
 
     /** 月度收支 */

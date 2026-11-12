@@ -15,6 +15,7 @@ func (c *ControllerV1) Detail(ctx context.Context, req *v1.DetailReq) (res *v1.D
 
 	res = &v1.DetailRes{
 		Id:              detail.Payment.Id,
+		RideOrderId:     detail.Payment.RideOrderId,
 		Amount:          detail.Payment.Amount,
 		PaymentType:     detail.Payment.PaymentType,
 		PaymentDate:     formatDate(detail.Payment.PaymentDate),

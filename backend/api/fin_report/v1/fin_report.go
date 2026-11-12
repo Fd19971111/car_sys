@@ -4,20 +4,22 @@ import "github.com/gogf/gf/v2/frame/g"
 
 // ReportSummary 报表核心指标（金额单位：元）。
 type ReportSummary struct {
-	Income         float64 `json:"income"         dc:"收入合计"`
-	Expense        float64 `json:"expense"        dc:"支出合计"`
-	Net            float64 `json:"net"            dc:"结余（收入-支出）"`
-	NetRate        float64 `json:"netRate"        dc:"结余率（%）"`
-	TotalBalance   float64 `json:"totalBalance"   dc:"资金余额合计"`
-	CashBalance    float64 `json:"cashBalance"    dc:"现金余额"`
-	BankBalance    float64 `json:"bankBalance"    dc:"银行余额"`
-	Receivable     float64 `json:"receivable"     dc:"应收账款余额"`
-	Payable        float64 `json:"payable"        dc:"应付账款余额"`
-	ContractAmount float64 `json:"contractAmount" dc:"合同总额"`
-	ReceivedAmount float64 `json:"receivedAmount" dc:"累计回款"`
-	YearReceived   float64 `json:"yearReceived"   dc:"所选年份回款"`
-	UnpaidAmount   float64 `json:"unpaidAmount"   dc:"待回款"`
-	ReceivedRate   float64 `json:"receivedRate"   dc:"回款率（%）"`
+	Income        float64 `json:"income"         dc:"收入合计"`
+	Expense       float64 `json:"expense"        dc:"支出合计"`
+	Net           float64 `json:"net"            dc:"结余（收入-支出）"`
+	NetRate       float64 `json:"netRate"        dc:"结余率（%）"`
+	TotalBalance  float64 `json:"totalBalance"   dc:"资金余额合计"`
+	CashBalance   float64 `json:"cashBalance"    dc:"现金余额"`
+	BankBalance   float64 `json:"bankBalance"    dc:"银行余额"`
+	Receivable    float64 `json:"receivable"     dc:"应收账款余额"`
+	Payable       float64 `json:"payable"        dc:"应付账款余额"`
+	RideRevenue   float64 `json:"rideRevenue"    dc:"所选年份完单车费"`
+	PassengerPaid float64 `json:"passengerPaid"  dc:"所选年份关联行程收款"`
+	YearReceived  float64 `json:"yearReceived"   dc:"所选年份所有收款"`
+	UnpaidFare    float64 `json:"unpaidFare"     dc:"完单待收车费余额"`
+	DriverPayable float64 `json:"driverPayable"  dc:"司机待结余额"`
+	DriverSettled float64 `json:"driverSettled"  dc:"所选年份司机已结"`
+	DriverExpense float64 `json:"driverExpense"  dc:"所选年份司机应得"`
 }
 
 // ReportMonthlyItem 月度收支。

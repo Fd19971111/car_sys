@@ -17,6 +17,7 @@ type ListReq struct {
 // PaymentListItem 收款记录列表行
 type PaymentListItem struct {
 	Id              int64   `json:"id"              dc:"收款记录ID"`
+	RideOrderId     int64   `json:"rideOrderId"     dc:"关联行程订单ID，0表示未关联"`
 	Amount          float64 `json:"amount"          dc:"收款金额"`
 	PaymentType     string  `json:"paymentType"     dc:"款项类型"`
 	PaymentDate     string  `json:"paymentDate"     dc:"收款日期"`
@@ -70,6 +71,7 @@ type LedgerEntryItem struct {
 // DetailRes 收款记录详情响应
 type DetailRes struct {
 	Id              int64              `json:"id"              dc:"收款记录ID"`
+	RideOrderId     int64              `json:"rideOrderId"     dc:"关联行程订单ID，0表示未关联"`
 	Amount          float64            `json:"amount"          dc:"本次收款金额"`
 	PaymentType     string             `json:"paymentType"     dc:"款项类型"`
 	PaymentDate     string             `json:"paymentDate"     dc:"收款日期"`
@@ -86,6 +88,7 @@ type DetailRes struct {
 
 // PaymentFormFields 收款记录表单公共字段
 type PaymentFormFields struct {
+	RideOrderId   int64   `json:"rideOrderId"   v:"min:0#订单ID不能小于0" dc:"关联行程订单ID，0表示通用收款"`
 	Amount        float64 `json:"amount"        v:"required|min:0.01#请输入收款金额|收款金额必须大于 0" dc:"收款金额（元）"`
 	PaymentType   string  `json:"paymentType"   v:"required|max-length:50#请选择款项类型|款项类型最多 50 个字符" dc:"款项类型：定金/首期款/中期款/尾款"`
 	PaymentDate   string  `json:"paymentDate"   v:"required#请选择收款日期"                                    dc:"收款日期（YYYY-MM-DD）"`

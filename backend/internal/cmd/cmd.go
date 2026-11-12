@@ -6,6 +6,7 @@ import (
 	"engineServ/internal/controller/auth"
 	"engineServ/internal/controller/customer"
 	"engineServ/internal/controller/department"
+	driverFinanceController "engineServ/internal/controller/driver_finance"
 	finBasicController "engineServ/internal/controller/fin_basic"
 	finInitController "engineServ/internal/controller/fin_init"
 	finReportController "engineServ/internal/controller/fin_report"
@@ -59,6 +60,7 @@ var Main = gcmd.Command{
 					group.Bind(auth.NewV1Plus())
 					group.Bind(customer.NewV1())
 					group.Bind(department.NewV1())
+					group.Bind(driverFinanceController.NewV1())
 					group.Bind(finInitController.NewV1())
 					group.Bind(finBasicController.NewV1())
 					group.Bind(finReportController.NewV1())

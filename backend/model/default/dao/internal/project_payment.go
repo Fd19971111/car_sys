@@ -22,6 +22,7 @@ type ProjectPaymentDao struct {
 // ProjectPaymentColumns defines and stores column names for the table payment.
 type ProjectPaymentColumns struct {
 	Id            string // 主键
+	RideOrderId   string // 关联行程订单ID
 	Amount        string // 收款金额
 	PaymentType   string // 款项类型：定金/首期款/中期款/尾款
 	PaymentDate   string // 收款日期
@@ -35,6 +36,7 @@ type ProjectPaymentColumns struct {
 // projectPaymentColumns holds the columns for the table payment.
 var projectPaymentColumns = ProjectPaymentColumns{
 	Id:            "id",
+	RideOrderId:   "ride_order_id",
 	Amount:        "amount",
 	PaymentType:   "payment_type",
 	PaymentDate:   "payment_date",

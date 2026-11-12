@@ -73,7 +73,7 @@ type CreateInput struct {
 	VoucherDate string  // 凭证日期 YYYY-MM-DD，为空取当前日期
 	VoucherType string  // 凭证类型 GENERAL/RECEIPT/PAYMENT/TRANSFER，为空取 GENERAL
 	Summary     string  // 凭证摘要，为空取第一条分录摘要
-	SourceType  string  // 来源类型，如 PROJECT_PAYMENT，为空取 MANUAL
+	SourceType  string  // 来源类型，为空取 MANUAL
 	SourceId    int64   // 来源业务记录 ID，手工录入为 0
 	CreatedBy   uint    // 制单人 site_user.id
 	Entries     []Entry // 必填，至少两条，且借贷合计必须相等

@@ -5,7 +5,7 @@ import { useRouterPush } from '@/hooks/common/router';
 import { formatMoney } from '@/views/finance/components/finance-meta';
 import ReportCompositionChart from './composition-chart.vue';
 import ReportTrendChart from './trend-chart.vue';
-import { collapseItems, formatMoneyCompact, formatPercent } from './report-meta';
+import { collapseItems, formatMoneyCompact } from './report-meta';
 
 defineOptions({
   name: 'ReportOverviewPanel'
@@ -38,17 +38,18 @@ const hasAnyData = computed(() => {
       (s.income > 0 ||
         s.expense > 0 ||
         s.totalBalance !== 0 ||
-        s.contractAmount > 0)
+        s.rideRevenue > 0 ||
+        s.driverPayable > 0)
   );
 });
 
 const hasTrendData = computed(() => monthly.value.some(item => item.income > 0 || item.expense > 0));
 
-/** 有收款 / 合同数据，但还没有任何记账凭证 */
+/** 有经营数据，但还没有任何记账凭证 */
 const pendingVoucher = computed(() => {
   const s = summary.value;
 
-  return Boolean(s && s.contractAmount > 0 && s.income === 0 && s.expense === 0 && s.totalBalance === 0);
+  return Boolean(s && s.rideRevenue > 0 && s.income === 0 && s.expense === 0 && s.totalBalance === 0);
 });
 
 const compositionItems = computed(() => {
@@ -65,14 +66,14 @@ const fundAccounts = computed(() => props.overview?.fundAccounts ?? []);
 
 const yearLabel = computed(() => (props.year === dayjs().year() ? '本年' : `${props.year} 年`));
 
-const yearReceivedLabel = computed(() => (props.year === dayjs().year() ? '本年回款' : `${props.year} 年回款`));
+const yearReceivedLabel = computed(() => (props.year === dayjs().year() ? '本年收款（含未关联）' : `${props.year} 年收款（含未关联）`));
 
 /** 进入收款管理，方便业务人员把线下收款补录进来 */
 function goPayment() {
   void routerPushByKey('finance_payment');
 }
 
-/** 进入付款管理，登记供应商 / 人工等支出 */
+/** 进入付款管理，登记公司日常费用 */
 function goPayout() {
   void routerPushByKey('finance_payout');
 }
@@ -141,8 +142,6 @@ const statCards = computed(() => {
   ];
 });
 
-/** 回款进度百分比，限制在 0-100 */
-const receivedRate = computed(() => Math.min(100, Math.max(0, summary.value?.receivedRate ?? 0)));
 </script>
 
 <template>
@@ -159,7 +158,7 @@ const receivedRate = computed(() => Math.min(100, Math.max(0, summary.value?.rec
       <NAlert v-else-if="overview && pendingVoucher" type="info" :bordered="false" class="tip">
         <div class="tip__row">
           <span>
-            报表按记账凭证统计。历史收款记录还没有生成凭证，所以收入、支出和资金余额暂显示为 0；从现在起，新登记的收款与付款会按借贷规则自动记账，并在这里自动汇总。
+            总账收入、支出和资金余额按记账凭证统计；完单收入、乘客收款和司机结算按业务记录统计。补录历史收款时，可关联对应行程订单。
           </span>
           <NButton text type="primary" size="tiny" @click="goPayment">
             去登记收款
@@ -252,36 +251,43 @@ const receivedRate = computed(() => Math.min(100, Math.max(0, summary.value?.rec
         <NCard :bordered="false" class="panel" size="small">
           <div class="panel__head">
             <div>
-              <h3 class="panel__title">项目回款</h3>
-              <p class="panel__subtitle">合同签了多少、客户已经付了多少</p>
+              <h3 class="panel__title">行程与司机结算</h3>
+              <p class="panel__subtitle">完单车费、乘客收款及司机待结金额</p>
             </div>
-            <span class="panel__badge">{{ formatPercent(receivedRate) }}</span>
-          </div>
-
-          <div class="progress">
-            <div class="progress__bar" :style="{ width: `${receivedRate}%` }"></div>
           </div>
 
           <div class="collection">
             <div class="collection__item">
-              <span>合同总额</span>
-              <strong>{{ formatMoney(summary?.contractAmount) }}</strong>
+              <span>{{ yearLabel }}完单车费</span>
+              <strong>{{ formatMoney(summary?.rideRevenue) }}</strong>
             </div>
             <div class="collection__item">
-              <span>累计回款</span>
-              <strong class="amount--success">{{ formatMoney(summary?.receivedAmount) }}</strong>
+              <span>关联行程收款</span>
+              <strong class="amount--success">{{ formatMoney(summary?.passengerPaid) }}</strong>
             </div>
             <div class="collection__item">
               <span>{{ yearReceivedLabel }}</span>
               <strong class="amount--info">{{ formatMoney(summary?.yearReceived) }}</strong>
             </div>
             <div class="collection__item">
-              <span>待回款</span>
-              <strong class="amount--error">{{ formatMoney(summary?.unpaidAmount) }}</strong>
+              <span>完单待收</span>
+              <strong class="amount--error">{{ formatMoney(summary?.unpaidFare) }}</strong>
+            </div>
+            <div class="collection__item">
+              <span>{{ yearLabel }}司机应得</span>
+              <strong>{{ formatMoney(summary?.driverExpense) }}</strong>
+            </div>
+            <div class="collection__item">
+              <span>司机待结余额</span>
+              <strong class="amount--error">{{ formatMoney(summary?.driverPayable) }}</strong>
+            </div>
+            <div class="collection__item">
+              <span>{{ yearLabel }}司机已结</span>
+              <strong class="amount--success">{{ formatMoney(summary?.driverSettled) }}</strong>
             </div>
           </div>
 
-          <p class="panel__note">回款率 = 累计回款 ÷ 合同总额；回款按实际收款日期统计。</p>
+          <p class="panel__note">行程收款仅统计关联订单的收款记录；司机待结 = 全部有效司机应得 - 已结算分摊。</p>
         </NCard>
 
         <NCard :bordered="false" class="panel" size="small">

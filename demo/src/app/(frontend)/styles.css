@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: #f5f7fa;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.metric-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+}
+
+.metric-icon.blue {
+  background: #edf4ff;
+  color: #216bfe;
+}
+.metric-icon.green {
+  background: #ebfaf4;
+  color: #0fa875;
+}
+.metric-icon.purple {
+  background: #f4efff;
+  color: #8358df;
+}
+.metric-icon.orange {
+  background: #fff4e8;
+  color: #e8822e;
+}
+.metric-bar.blue {
+  background: #bfd4ff;
+}
+.metric-bar.green {
+  background: #b9ead8;
+}
+.metric-bar.purple {
+  background: #d8c8f7;
+}
+.metric-bar.orange {
+  background: #f7d3af;
+}
+
+.map-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar-group[open] > summary .sidebar-group-chevron {
+  transform: rotate(90deg);
+}
+
+.figma-custom-code-fragment {
+  display: contents;
+}
+
+.figma-bypass-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 2147483647;
+  transform: translateY(-150%);
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  padding: 8px 12px;
+  font:
+    600 14px/1.2 system-ui,
+    sans-serif;
+  text-decoration: none;
+}
+
+.figma-bypass-link:focus {
+  transform: translateY(0);
+}

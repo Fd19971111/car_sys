@@ -33,7 +33,7 @@ const submitting = ref(false);
 function createDefaultModel(): Api.Payout.FormData {
   return {
     amount: null,
-    payoutType: '材料款',
+    payoutType: '燃油费',
     payoutDate: dayjs().format('YYYY-MM-DD'),
     vendorName: '',
     fundAccountId: defaultFundAccountId.value,
@@ -65,7 +65,7 @@ watch(visible, async value => {
     const { amount, payoutType, payoutDate, vendorName, fundAccountId, remark } = props.rowData;
     model.value = {
       amount,
-      payoutType: payoutType || '材料款',
+      payoutType: payoutType || '燃油费',
       payoutDate: payoutDate || dayjs().format('YYYY-MM-DD'),
       vendorName: vendorName || '',
       fundAccountId: fundAccountId || defaultFundAccountId.value,
@@ -116,7 +116,7 @@ async function handleSubmit() {
           <NSelect v-model:value="model.payoutType" :options="PAYOUT_TYPE_OPTIONS" placeholder="请选择或输入费用类型" filterable tag clearable />
         </NFormItem>
         <NFormItem label="收款方" path="vendorName">
-          <NInput v-model:value="model.vendorName" maxlength="100" placeholder="供应商 / 工人 / 公司" clearable />
+          <NInput v-model:value="model.vendorName" maxlength="100" placeholder="加油站 / 维修厂 / 服务商" clearable />
         </NFormItem>
         <NFormItem label="付款日期" path="payoutDate">
           <NDatePicker
@@ -132,7 +132,7 @@ async function handleSubmit() {
           <NSelect v-model:value="model.fundAccountId" :options="fundAccountOptions" placeholder="请选择付款账户" filterable clearable />
         </NFormItem>
         <NFormItem label="备注" path="remark">
-          <NInput v-model:value="model.remark" type="textarea" :rows="3" maxlength="255" show-count placeholder="如：转账、结算尾款" />
+          <NInput v-model:value="model.remark" type="textarea" :rows="3" maxlength="255" show-count placeholder="如：车辆保养、停车费" />
         </NFormItem>
       </NForm>
       <template #footer>

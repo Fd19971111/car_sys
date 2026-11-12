@@ -16,6 +16,7 @@ declare namespace Api {
     /** 收款记录（列表 / 详情共用） */
     interface Item {
       id: number;
+      rideOrderId: number;
       amount: number;
       /** 款项类型：定金 / 首期款 / 中期款 / 尾款 */
       paymentType: string;
@@ -44,6 +45,7 @@ declare namespace Api {
 
     /** 新增 / 编辑收款记录提交的数据 */
     interface FormData {
+      rideOrderId: number | null;
       amount: number | null;
       paymentType: string;
       paymentDate: string | null;

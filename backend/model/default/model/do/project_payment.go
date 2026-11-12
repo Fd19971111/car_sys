@@ -13,6 +13,7 @@ import (
 type ProjectPayment struct {
 	g.Meta        `orm:"table:payment, do:true"`
 	Id            any         // 主键
+	RideOrderId   any         // 关联行程订单ID
 	Amount        any         // 收款金额
 	PaymentType   any         // 款项类型：定金/首期款/中期款/尾款
 	PaymentDate   *gtime.Time // 收款日期

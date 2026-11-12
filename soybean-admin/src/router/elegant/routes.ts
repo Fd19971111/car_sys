@@ -123,6 +123,18 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
+        name: 'finance_driver-settlement',
+        path: '/finance/driver-settlement',
+        component: 'view.finance_driver-settlement',
+        meta: {
+          title: 'finance_driver-settlement',
+          i18nKey: 'route.finance_driver-settlement',
+          icon: 'mdi:account-cash-outline',
+          isAdmin: {},
+          order: 4
+        }
+      },
+      {
         name: 'finance_payment',
         path: '/finance/payment',
         component: 'view.finance_payment',

@@ -172,6 +172,7 @@ const routeMap: RouteMap = {
   "enterprise_user": "/enterprise/user",
   "finance": "/finance",
   "finance_basic": "/finance/basic",
+  "finance_driver-settlement": "/finance/driver-settlement",
   "finance_payment": "/finance/payment",
   "finance_payout": "/finance/payout",
   "finance_setup": "/finance/setup",

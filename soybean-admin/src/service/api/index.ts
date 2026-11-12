@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './customer';
 export * from './department';
+export * from './driver-finance';
 export * from './fin-basic';
 export * from './fin-init';
 export * from './fin-report';

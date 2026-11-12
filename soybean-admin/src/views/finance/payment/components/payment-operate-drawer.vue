@@ -32,8 +32,9 @@ const submitting = ref(false);
 
 function createDefaultModel(): Api.Payment.FormData {
   return {
+    rideOrderId: null,
     amount: null,
-    paymentType: '定金',
+    paymentType: '行程车费',
     paymentDate: dayjs().format('YYYY-MM-DD'),
     fundAccountId: defaultFundAccountId.value,
     remark: ''
@@ -60,10 +61,11 @@ watch(visible, async value => {
   if (!value) return;
   await loadFundAccounts();
   if (props.operateType === 'edit' && props.rowData) {
-    const { amount, paymentType, paymentDate, fundAccountId, remark } = props.rowData;
+    const { rideOrderId, amount, paymentType, paymentDate, fundAccountId, remark } = props.rowData;
     model.value = {
+      rideOrderId: rideOrderId || null,
       amount,
-      paymentType: paymentType || '定金',
+      paymentType: paymentType || '行程车费',
       paymentDate: paymentDate || dayjs().format('YYYY-MM-DD'),
       fundAccountId: fundAccountId || defaultFundAccountId.value,
       remark
@@ -104,6 +106,9 @@ async function handleSubmit() {
   <NDrawer v-model:show="visible" :width="drawerWidth" :mask-closable="false">
     <NDrawerContent :title="title" closable :native-scrollbar="false" @close="visible = false">
       <NForm ref="formRef" :model="model" :rules="rules" label-placement="left" label-width="100" require-mark-placement="right-hanging">
+        <NFormItem label="行程订单ID" path="rideOrderId">
+          <NInputNumber v-model:value="model.rideOrderId" class="w-full" :min="1" :precision="0" clearable placeholder="可留空；填写订单详情中的ID以关联收款" />
+        </NFormItem>
         <NFormItem label="收款金额" path="amount">
           <NInputNumber v-model:value="model.amount" class="w-full" :min="0.01" :precision="2" :show-button="false" placeholder="请输入收款金额">
             <template #prefix>¥</template>

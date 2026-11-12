@@ -24,6 +24,7 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   enterprise_staff: () => import("@/views/enterprise/staff/index.vue"),
   enterprise_user: () => import("@/views/enterprise/user/index.vue"),
   finance_basic: () => import("@/views/finance/basic/index.vue"),
+  "finance_driver-settlement": () => import("@/views/finance/driver-settlement/index.vue"),
   finance_payment: () => import("@/views/finance/payment/index.vue"),
   finance_payout: () => import("@/views/finance/payout/index.vue"),
   finance_setup: () => import("@/views/finance/setup/index.vue"),

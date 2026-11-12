@@ -7,27 +7,31 @@ import (
 	"strings"
 	"time"
 
+	"engineServ/internal/consts"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
 // Summary 报表核心指标，金额单位：元。
 type Summary struct {
-	Income         float64
-	Expense        float64
-	Net            float64
-	NetRate        float64
-	TotalBalance   float64
-	CashBalance    float64
-	BankBalance    float64
-	Receivable     float64
-	Payable        float64
-	ContractAmount float64
-	ReceivedAmount float64
-	YearReceived   float64
-	UnpaidAmount   float64
-	ReceivedRate   float64
+	Income        float64
+	Expense       float64
+	Net           float64
+	NetRate       float64
+	TotalBalance  float64
+	CashBalance   float64
+	BankBalance   float64
+	Receivable    float64
+	Payable       float64
+	RideRevenue   float64
+	PassengerPaid float64
+	YearReceived  float64
+	UnpaidFare    float64
+	DriverPayable float64
+	DriverSettled float64
+	DriverExpense float64
 }
 
 // Monthly 月度收支。
@@ -133,12 +137,13 @@ func (s *Service) Overview(ctx context.Context, year int) (*Overview, error) {
 
 	overview := &Overview{Year: year}
 
-	if value, err := g.DB().GetValue(ctx, "SELECT is_initialized FROM fin_setup_config WHERE id=1"); err == nil {
+	companyId := currentCompanyId(ctx)
+	if value, err := g.DB().GetValue(ctx, "SELECT is_initialized FROM fin_setup_config WHERE company_id=?", companyId); err == nil {
 		overview.Initialized = value.Int() == 1
 	}
 
 	overview.CurrentPeriod = now.Format("2006-01")
-	if value, err := g.DB().GetValue(ctx, "SELECT status_code FROM fin_accounting_period WHERE period_code=?", overview.CurrentPeriod); err == nil {
+	if value, err := g.DB().GetValue(ctx, "SELECT status_code FROM fin_accounting_period WHERE company_id=? AND period_code=?", companyId, overview.CurrentPeriod); err == nil {
 		overview.PeriodStatus = value.String()
 	}
 
@@ -157,7 +162,7 @@ func (s *Service) Overview(ctx context.Context, year int) (*Overview, error) {
 	if err := s.fillReceivable(ctx, overview); err != nil {
 		return nil, err
 	}
-	if err := s.fillContract(ctx, overview); err != nil {
+	if err := s.fillRideFinance(ctx, overview); err != nil {
 		return nil, err
 	}
 	if err := s.fillRecentFlows(ctx, overview); err != nil {
@@ -180,8 +185,8 @@ func (s *Service) fillMonthly(ctx context.Context, overview *Overview) error {
 		FROM fin_voucher_entry e
 		INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED'
 		INNER JOIN fin_account a ON a.id=e.account_id
-		WHERE YEAR(v.voucher_date)=? AND a.category_code IN ('REVENUE','EXPENSE')
-		GROUP BY MONTH(v.voucher_date)`, overview.Year)
+		WHERE v.company_id=? AND e.company_id=? AND a.company_id=? AND YEAR(v.voucher_date)=? AND a.category_code IN ('REVENUE','EXPENSE')
+		GROUP BY MONTH(v.voucher_date)`, currentCompanyId(ctx), currentCompanyId(ctx), currentCompanyId(ctx), overview.Year)
 	if err != nil {
 		return gerror.Wrap(err, "统计月度收支失败")
 	}
@@ -220,10 +225,10 @@ func (s *Service) fillBreakdown(ctx context.Context, overview *Overview) error {
 		FROM fin_voucher_entry e
 		INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED'
 		INNER JOIN fin_account a ON a.id=e.account_id
-		WHERE YEAR(v.voucher_date)=? AND a.category_code IN ('REVENUE','EXPENSE')
+		WHERE v.company_id=? AND e.company_id=? AND a.company_id=? AND YEAR(v.voucher_date)=? AND a.category_code IN ('REVENUE','EXPENSE')
 		GROUP BY a.id,a.account_code,a.account_name,a.category_code
 		HAVING net_amount <> 0
-		ORDER BY net_amount DESC`, overview.Year)
+		ORDER BY net_amount DESC`, currentCompanyId(ctx), currentCompanyId(ctx), currentCompanyId(ctx), overview.Year)
 	if err != nil {
 		return gerror.Wrap(err, "统计收支构成失败")
 	}
@@ -268,16 +273,17 @@ func (s *Service) fillFundAccounts(ctx context.Context, overview *Overview) erro
 			COALESCE(ob.opening_debit-ob.opening_credit,0) + COALESCE(mv.movement,0) AS balance
 		FROM fin_fund_account f
 		INNER JOIN fin_account a ON a.id=f.ledger_account_id
-		LEFT JOIN fin_account_balance ob ON ob.account_id=a.id AND ob.period_code=?
+		LEFT JOIN fin_account_balance ob ON ob.company_id=a.company_id AND ob.account_id=a.id AND ob.period_code=?
 		LEFT JOIN (
 			SELECT e.account_id,
 				SUM(CASE WHEN e.direction_code='DEBIT' THEN e.amount ELSE -e.amount END) AS movement
 			FROM fin_voucher_entry e
-			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED'
+			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED' AND v.company_id=e.company_id
+			WHERE e.company_id=?
 			GROUP BY e.account_id
 		) mv ON mv.account_id=a.id
-		WHERE f.enabled=1
-		ORDER BY f.account_type,f.id`, startPeriod)
+		WHERE f.company_id=? AND a.company_id=f.company_id AND f.enabled=1
+		ORDER BY f.account_type,f.id`, startPeriod, currentCompanyId(ctx), currentCompanyId(ctx))
 	if err != nil {
 		return gerror.Wrap(err, "统计资金账户余额失败")
 	}
@@ -314,7 +320,7 @@ func (s *Service) fillAccountBalances(ctx context.Context, overview *Overview) e
 				THEN ob.opening_debit-ob.opening_credit
 				ELSE ob.opening_credit-ob.opening_debit END,0) + COALESCE(mv.movement,0) AS balance
 		FROM fin_account a
-		LEFT JOIN fin_account_balance ob ON ob.account_id=a.id AND ob.period_code=?
+		LEFT JOIN fin_account_balance ob ON ob.company_id=a.company_id AND ob.account_id=a.id AND ob.period_code=?
 		LEFT JOIN (
 			SELECT e.account_id,
 				SUM(CASE WHEN a2.direction_code='DEBIT' AND e.direction_code='DEBIT' THEN e.amount
@@ -322,14 +328,15 @@ func (s *Service) fillAccountBalances(ctx context.Context, overview *Overview) e
 					WHEN e.direction_code='CREDIT' THEN e.amount
 					ELSE -e.amount END) AS movement
 			FROM fin_voucher_entry e
-			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED'
-			INNER JOIN fin_account a2 ON a2.id=e.account_id
+			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED' AND v.company_id=e.company_id
+			INNER JOIN fin_account a2 ON a2.id=e.account_id AND a2.company_id=e.company_id
+			WHERE e.company_id=?
 			GROUP BY e.account_id
 		) mv ON mv.account_id=a.id
-		WHERE a.category_code IN ('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+		WHERE a.company_id=? AND a.category_code IN ('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
 		GROUP BY a.id,a.account_code,a.account_name,a.category_code,a.direction_code,a.sort_order,ob.opening_debit,ob.opening_credit,mv.movement
 		HAVING balance <> 0
-		ORDER BY FIELD(a.category_code,'ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE'),a.sort_order,a.account_code`, startPeriod)
+		ORDER BY FIELD(a.category_code,'ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE'),a.sort_order,a.account_code`, startPeriod, currentCompanyId(ctx), currentCompanyId(ctx))
 	if err != nil {
 		return gerror.Wrap(err, "统计科目余额失败")
 	}
@@ -360,7 +367,7 @@ func (s *Service) fillReceivable(ctx context.Context, overview *Overview) error 
 				THEN ob.opening_debit-ob.opening_credit
 				ELSE ob.opening_credit-ob.opening_debit END,0) + COALESCE(mv.movement,0) AS balance
 		FROM fin_account a
-		LEFT JOIN fin_account_balance ob ON ob.account_id=a.id AND ob.period_code=?
+		LEFT JOIN fin_account_balance ob ON ob.company_id=a.company_id AND ob.account_id=a.id AND ob.period_code=?
 		LEFT JOIN (
 			SELECT e.account_id,
 				SUM(CASE WHEN a2.direction_code='DEBIT' AND e.direction_code='DEBIT' THEN e.amount
@@ -368,12 +375,13 @@ func (s *Service) fillReceivable(ctx context.Context, overview *Overview) error 
 					WHEN e.direction_code='CREDIT' THEN e.amount
 					ELSE -e.amount END) AS movement
 			FROM fin_voucher_entry e
-			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED'
-			INNER JOIN fin_account a2 ON a2.id=e.account_id
+			INNER JOIN fin_voucher v ON v.id=e.voucher_id AND v.status_code='POSTED' AND v.company_id=e.company_id
+			INNER JOIN fin_account a2 ON a2.id=e.account_id AND a2.company_id=e.company_id
+			WHERE e.company_id=?
 			GROUP BY e.account_id
 		) mv ON mv.account_id=a.id
-		WHERE a.account_code IN ('1122','2202')
-		GROUP BY a.id,a.account_code,a.direction_code,ob.opening_debit,ob.opening_credit,mv.movement`, startPeriod)
+		WHERE a.company_id=? AND a.account_code IN ('1122','2202')
+		GROUP BY a.id,a.account_code,a.direction_code,ob.opening_debit,ob.opening_credit,mv.movement`, startPeriod, currentCompanyId(ctx), currentCompanyId(ctx))
 	if err != nil {
 		return gerror.Wrap(err, "统计应收应付失败")
 	}
@@ -389,34 +397,59 @@ func (s *Service) fillReceivable(ctx context.Context, overview *Overview) error 
 	return nil
 }
 
-// fillContract 统计订单金额与回款情况，让不懂财务的人也能看懂回款进度。
-func (s *Service) fillContract(ctx context.Context, overview *Overview) error {
-	contract, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(quoted_fare),0) FROM ride_order WHERE deleted_at IS NULL AND status<>'cancelled'")
-	if err != nil {
-		return gerror.Wrap(err, "统计订单总额失败")
+// fillRideFinance 统计自营行程收入、乘客收款和司机应付结算。
+func (s *Service) fillRideFinance(ctx context.Context, overview *Overview) error {
+	companyId := currentCompanyId(ctx)
+	queries := []struct {
+		query string
+		args  []interface{}
+		set   func(float64)
+	}{
+		{
+			query: "SELECT COALESCE(SUM(final_fare),0) FROM ride_order WHERE company_id=? AND deleted_at IS NULL AND status='completed' AND YEAR(completed_at)=?",
+			args:  []interface{}{companyId, overview.Year}, set: func(value float64) { overview.Summary.RideRevenue = round2(value) },
+		},
+		{
+			query: "SELECT COALESCE(SUM(amount),0) FROM payment WHERE company_id=? AND deleted_at IS NULL AND ride_order_id>0 AND YEAR(payment_date)=?",
+			args:  []interface{}{companyId, overview.Year}, set: func(value float64) { overview.Summary.PassengerPaid = round2(value) },
+		},
+		{
+			query: "SELECT COALESCE(SUM(amount),0) FROM payment WHERE company_id=? AND deleted_at IS NULL AND YEAR(payment_date)=?",
+			args:  []interface{}{companyId, overview.Year}, set: func(value float64) { overview.Summary.YearReceived = round2(value) },
+		},
+		{
+			query: `SELECT COALESCE(SUM(GREATEST(o.final_fare-COALESCE(p.paid,0),0)),0)
+				FROM ride_order o LEFT JOIN (
+					SELECT ride_order_id,SUM(amount) AS paid FROM payment
+					WHERE company_id=? AND deleted_at IS NULL AND ride_order_id>0 GROUP BY ride_order_id
+				) p ON p.ride_order_id=o.id
+				WHERE o.company_id=? AND o.deleted_at IS NULL AND o.status='completed'`,
+			args: []interface{}{companyId, companyId}, set: func(value float64) { overview.Summary.UnpaidFare = round2(value) },
+		},
+		{
+			query: "SELECT COALESCE(SUM(driver_amount),0) FROM ride_driver_earning WHERE company_id=? AND status='POSTED' AND YEAR(earning_date)=?",
+			args:  []interface{}{companyId, overview.Year}, set: func(value float64) { overview.Summary.DriverExpense = round2(value) },
+		},
+		{
+			query: `SELECT COALESCE(SUM(i.amount),0) FROM ride_driver_settlement_item i
+				INNER JOIN ride_driver_settlement s ON s.id=i.settlement_id AND s.company_id=i.company_id AND s.status='POSTED' AND s.deleted_at IS NULL
+				WHERE i.company_id=? AND YEAR(s.settlement_date)=?`,
+			args: []interface{}{companyId, overview.Year}, set: func(value float64) { overview.Summary.DriverSettled = round2(value) },
+		},
+		{
+			query: `SELECT COALESCE((SELECT SUM(driver_amount) FROM ride_driver_earning WHERE company_id=? AND status='POSTED'),0)
+				- COALESCE((SELECT SUM(i.amount) FROM ride_driver_settlement_item i
+					INNER JOIN ride_driver_settlement s ON s.id=i.settlement_id AND s.company_id=i.company_id AND s.status='POSTED' AND s.deleted_at IS NULL
+					WHERE i.company_id=?),0)`,
+			args: []interface{}{companyId, companyId}, set: func(value float64) { overview.Summary.DriverPayable = round2(value) },
+		},
 	}
-	received, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM payment WHERE deleted_at IS NULL")
-	if err != nil {
-		return gerror.Wrap(err, "统计收款总额失败")
-	}
-	yearReceived, err := g.DB().GetValue(ctx, "SELECT COALESCE(SUM(amount),0) FROM payment WHERE deleted_at IS NULL AND YEAR(payment_date)=?", overview.Year)
-	if err != nil {
-		return gerror.Wrap(err, "统计本年收款失败")
-	}
-
-	contractAmount := round2(contract.Float64())
-	receivedAmount := round2(received.Float64())
-	unpaid := round2(contractAmount - receivedAmount)
-	if unpaid < 0 {
-		unpaid = 0
-	}
-
-	overview.Summary.ContractAmount = contractAmount
-	overview.Summary.ReceivedAmount = receivedAmount
-	overview.Summary.YearReceived = round2(yearReceived.Float64())
-	overview.Summary.UnpaidAmount = unpaid
-	if contractAmount > 0 {
-		overview.Summary.ReceivedRate = round1(receivedAmount / contractAmount * 100)
+	for _, item := range queries {
+		value, err := g.DB().GetValue(ctx, item.query, item.args...)
+		if err != nil {
+			return gerror.Wrap(err, "统计自营行程财务指标失败")
+		}
+		item.set(value.Float64())
 	}
 	return nil
 }
@@ -427,11 +460,12 @@ func (s *Service) fillRecentFlows(ctx context.Context, overview *Overview) error
 			t.id,t.direction_code,t.amount,t.remark,
 			DATE_FORMAT(t.occurred_at,'%Y-%m-%d %H:%i:%s') AS occurred_at,
 			COALESCE(a.account_name,'') AS account_name,
-			COALESCE((SELECT f.account_name FROM fin_fund_account f WHERE f.ledger_account_id=t.account_id ORDER BY f.enabled DESC,f.id LIMIT 1),'') AS fund_account_name
+			COALESCE((SELECT f.account_name FROM fin_fund_account f WHERE f.ledger_account_id=t.account_id AND f.company_id=t.company_id ORDER BY f.enabled DESC,f.id LIMIT 1),'') AS fund_account_name
 		FROM fin_transaction t
-		LEFT JOIN fin_account a ON a.id=t.account_id
+		LEFT JOIN fin_account a ON a.id=t.account_id AND a.company_id=t.company_id
+		WHERE t.company_id=?
 		ORDER BY t.occurred_at DESC,t.id DESC
-		LIMIT 6`)
+		LIMIT 6`, currentCompanyId(ctx))
 	if err != nil {
 		return gerror.Wrap(err, "查询最近资金流水失败")
 	}
@@ -485,8 +519,8 @@ func (s *Service) Flows(ctx context.Context, filter *FlowFilter) (*FlowList, err
 		size = 10
 	}
 
-	where := []string{"YEAR(t.occurred_at)=?"}
-	args := []interface{}{year}
+	where := []string{"t.company_id=?", "YEAR(t.occurred_at)=?"}
+	args := []interface{}{currentCompanyId(ctx), year}
 	if filter.Month >= 1 && filter.Month <= 12 {
 		where = append(where, "MONTH(t.occurred_at)=?")
 		args = append(args, filter.Month)
@@ -497,11 +531,12 @@ func (s *Service) Flows(ctx context.Context, filter *FlowFilter) (*FlowList, err
 	}
 	if filter.FundAccountId > 0 {
 		where = append(where, "t.account_id=(SELECT ledger_account_id FROM fin_fund_account WHERE id=?)")
-		args = append(args, filter.FundAccountId)
+		args = append(args, filter.FundAccountId, currentCompanyId(ctx))
+		where[len(where)-1] = "t.account_id=(SELECT ledger_account_id FROM fin_fund_account WHERE id=? AND company_id=?)"
 	}
 	if keyword := strings.TrimSpace(filter.Keyword); keyword != "" {
 		like := "%" + keyword + "%"
-		where = append(where, "(t.remark LIKE ? OR a.account_name LIKE ? OR EXISTS(SELECT 1 FROM fin_fund_account f2 WHERE f2.ledger_account_id=t.account_id AND f2.account_name LIKE ?))")
+		where = append(where, "(t.remark LIKE ? OR a.account_name LIKE ? OR EXISTS(SELECT 1 FROM fin_fund_account f2 WHERE f2.ledger_account_id=t.account_id AND f2.company_id=t.company_id AND f2.account_name LIKE ?))")
 		args = append(args, like, like, like)
 	}
 	whereSQL := strings.Join(where, " AND ")
@@ -511,7 +546,7 @@ func (s *Service) Flows(ctx context.Context, filter *FlowFilter) (*FlowList, err
 			COALESCE(SUM(CASE WHEN t.direction_code='INCOME' THEN t.amount ELSE 0 END),0) AS income,
 			COALESCE(SUM(CASE WHEN t.direction_code='EXPENSE' THEN t.amount ELSE 0 END),0) AS expense
 		FROM fin_transaction t
-		LEFT JOIN fin_account a ON a.id=t.account_id
+		LEFT JOIN fin_account a ON a.id=t.account_id AND a.company_id=t.company_id
 		WHERE %s`, whereSQL), args...)
 	if err != nil {
 		return nil, gerror.Wrap(err, "统计资金流水失败")
@@ -534,9 +569,9 @@ func (s *Service) Flows(ctx context.Context, filter *FlowFilter) (*FlowList, err
 			t.id,t.direction_code,t.amount,t.remark,
 			DATE_FORMAT(t.occurred_at,'%%Y-%%m-%%d %%H:%%i:%%s') AS occurred_at,
 			COALESCE(a.account_name,'') AS account_name,
-			COALESCE((SELECT f.account_name FROM fin_fund_account f WHERE f.ledger_account_id=t.account_id ORDER BY f.enabled DESC,f.id LIMIT 1),'') AS fund_account_name
+			COALESCE((SELECT f.account_name FROM fin_fund_account f WHERE f.ledger_account_id=t.account_id AND f.company_id=t.company_id ORDER BY f.enabled DESC,f.id LIMIT 1),'') AS fund_account_name
 		FROM fin_transaction t
-		LEFT JOIN fin_account a ON a.id=t.account_id
+		LEFT JOIN fin_account a ON a.id=t.account_id AND a.company_id=t.company_id
 		WHERE %s
 		ORDER BY t.occurred_at DESC,t.id DESC
 		LIMIT ?,?`, whereSQL), queryArgs...)
@@ -568,11 +603,15 @@ func mapFlows(records gdb.Result) []*Flow {
 // startPeriod 返回财务启用期间（YYYY-MM），未初始化时返回空字符串。
 func (s *Service) startPeriod(ctx context.Context) (string, error) {
 	value, err := g.DB().GetValue(ctx, `SELECT CONCAT(LPAD(period_year,4,'0'),'-',LPAD(start_month,2,'0'))
-		FROM fin_setup_config WHERE id=1 AND is_initialized=1`)
+		FROM fin_setup_config WHERE company_id=? AND is_initialized=1`, currentCompanyId(ctx))
 	if err != nil {
 		return "", gerror.Wrap(err, "读取财务启用期间失败")
 	}
 	return value.String(), nil
+}
+
+func currentCompanyId(ctx context.Context) uint {
+	return gconv.Uint(ctx.Value(consts.CtxCompanyIdKey))
 }
 
 // withPercent 计算每个科目占同类合计的百分比。

@@ -28,17 +28,19 @@ import (
 )
 
 const (
-	// SourceTypePayment 收款业务来源，与 fin_dictionary.SOURCE_TYPE 保持一致。
-	SourceTypePayment = "PROJECT_PAYMENT"
-	// SourceTypePayout 付款业务来源，与 fin_dictionary.SOURCE_TYPE 保持一致。
-	SourceTypePayout = "PROJECT_PAYOUT"
+	SourceTypePayment          = "RIDE_PAYMENT"
+	SourceTypePayout           = "OPERATING_PAYOUT"
+	SourceTypeRide             = "RIDE_ORDER"
+	SourceTypeDriverSettlement = "DRIVER_SETTLEMENT"
 
 	// 收款 / 付款凭证类型，对应 fin_dictionary.VOUCHER_TYPE。
 	voucherTypeReceipt = "RECEIPT"
 	voucherTypePayment = "PAYMENT"
 
 	// 默认收入科目：主营业务收入。
-	incomeAccountCode = "5001"
+	incomeAccountCode        = "5001"
+	receivableAccountCode    = "1122"
+	driverPayableAccountCode = "2202"
 	// 默认成本科目：主营业务成本。
 	costAccountCode = "5401"
 	// 默认管理费用科目。
@@ -55,19 +57,26 @@ const (
 // 材料 / 人工 / 施工 / 设计属于项目履约成本，默认计入主营业务成本；
 // 管理费和销售费按性质分别计入对应的期间费用；其他支出按成本处理。
 var payoutAccountCodes = map[string]string{
-	"材料款": costAccountCode,
-	"人工费": costAccountCode,
-	"施工费": costAccountCode,
-	"设计费": costAccountCode,
-	"管理费": adminExpenseAccountCode,
-	"销售费": sellingExpenseAccountCode,
-	"其他":  costAccountCode,
+	"燃油费":    costAccountCode,
+	"维修保养":   costAccountCode,
+	"保险费":    costAccountCode,
+	"路桥停车":   costAccountCode,
+	"车辆租赁":   costAccountCode,
+	"办公管理费":  adminExpenseAccountCode,
+	"其他运营支出": costAccountCode,
+	"材料款":    costAccountCode,
+	"人工费":    costAccountCode,
+	"施工费":    costAccountCode,
+	"设计费":    costAccountCode,
+	"管理费":    adminExpenseAccountCode,
+	"销售费":    sellingExpenseAccountCode,
+	"其他":     costAccountCode,
 }
 
 // Receipt 收款记账参数。
 type Receipt struct {
 	SourceId      int64  // 收款记录ID
-	ProjectName   string // 项目名称，用于摘要
+	RideOrderId   int64  // 行程订单ID，大于0时冲减应收账款
 	PaymentType   string // 款项类型，用于摘要
 	Date          string // 收款日期 YYYY-MM-DD
 	Amount        float64
@@ -78,7 +87,6 @@ type Receipt struct {
 // Payout 付款记账参数。
 type Payout struct {
 	SourceId      int64
-	ProjectName   string
 	PayoutType    string // 费用类型
 	Payee         string // 收款方
 	Date          string
@@ -127,7 +135,7 @@ func New() *Service { return &Service{} }
 // 未初始化时业务模块仍然可以保存单据，只是不生成凭证（voucher_id=0），
 // 避免旧数据 / 未启用财务的公司无法登记收付款。
 func (s *Service) IsInitialized(ctx context.Context, tx gdb.TX) (bool, error) {
-	value, err := tx.GetValue("SELECT is_initialized FROM fin_setup_config WHERE id=1")
+	value, err := tx.GetValue("SELECT is_initialized FROM fin_setup_config WHERE company_id=?", currentCompanyId(ctx))
 	if err != nil {
 		return false, gerror.Wrap(err, "读取财务初始化状态失败，请确认已执行 fin_init.sql")
 	}
@@ -141,7 +149,11 @@ func (s *Service) PostReceipt(ctx context.Context, tx gdb.TX, in *Receipt) (*Res
 		return nil, err
 	}
 
-	income, err := s.resolveAccount(ctx, tx, "REVENUE", incomeAccountCode)
+	creditCategory, creditCode := "REVENUE", incomeAccountCode
+	if in.RideOrderId > 0 {
+		creditCategory, creditCode = "ASSET", receivableAccountCode
+	}
+	income, err := s.resolveAccount(ctx, tx, creditCategory, creditCode)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +179,7 @@ func (s *Service) PostReceipt(ctx context.Context, tx gdb.TX, in *Receipt) (*Res
 				AccountCode: income.Code,
 				Direction:   voucher.DirectionCredit,
 				Amount:      amount,
-				Summary:     "确认项目收入",
+				Summary:     receiptCreditSummary(in),
 			},
 		},
 	})
@@ -175,6 +187,86 @@ func (s *Service) PostReceipt(ctx context.Context, tx gdb.TX, in *Receipt) (*Res
 		return nil, err
 	}
 
+	return &Result{VoucherId: result.VoucherId, VoucherNo: result.VoucherNo, PeriodCode: result.PeriodCode}, nil
+}
+
+// PostRideCompletion 在完单时确认车费收入、应收车费和司机应付成本。
+func (s *Service) PostRideCompletion(ctx context.Context, tx gdb.TX, orderId int64, orderNumber, date string, fare, driverFare float64, createdBy uint) (*Result, error) {
+	receivable, err := s.resolveAccount(ctx, tx, "ASSET", receivableAccountCode)
+	if err != nil {
+		return nil, err
+	}
+	income, err := s.resolveAccount(ctx, tx, "REVENUE", incomeAccountCode)
+	if err != nil {
+		return nil, err
+	}
+	cost, err := s.resolveAccount(ctx, tx, "EXPENSE", costAccountCode)
+	if err != nil {
+		return nil, err
+	}
+	payable, err := s.resolveAccount(ctx, tx, "LIABILITY", driverPayableAccountCode)
+	if err != nil {
+		return nil, err
+	}
+
+	fareAmount := formatAmount(fare)
+	driverAmount := formatAmount(driverFare)
+	summary := "行程完单 " + strings.TrimSpace(orderNumber)
+	entries := []voucher.Entry{
+		{AccountCode: receivable.Code, Direction: voucher.DirectionDebit, Amount: fareAmount, Summary: "确认行程应收车费"},
+		{AccountCode: income.Code, Direction: voucher.DirectionCredit, Amount: fareAmount, Summary: "确认行程营业收入"},
+	}
+	if driverFare > 0 {
+		entries = append(entries,
+			voucher.Entry{AccountCode: cost.Code, Direction: voucher.DirectionDebit, Amount: driverAmount, Summary: "确认司机车费成本"},
+			voucher.Entry{AccountCode: payable.Code, Direction: voucher.DirectionCredit, Amount: driverAmount, Summary: "确认应付司机车费"},
+		)
+	}
+	result, err := voucher.New().CreateWithTx(ctx, tx, &voucher.CreateInput{
+		VoucherDate: date,
+		VoucherType: "GENERAL",
+		Summary:     summary,
+		SourceType:  SourceTypeRide,
+		SourceId:    orderId,
+		CreatedBy:   createdBy,
+		Entries:     entries,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &Result{VoucherId: result.VoucherId, VoucherNo: result.VoucherNo, PeriodCode: result.PeriodCode}, nil
+}
+
+// PostDriverSettlement 确认司机结算：借记应付司机，贷记资金账户。
+func (s *Service) PostDriverSettlement(ctx context.Context, tx gdb.TX, sourceId, driverId int64, driverName, date string, amount float64, fundAccountId int64, createdBy uint) (*Result, error) {
+	fund, err := s.fundAccount(ctx, tx, fundAccountId)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.ensureFundBalance(ctx, tx, fund, amount); err != nil {
+		return nil, err
+	}
+	payable, err := s.resolveAccount(ctx, tx, "LIABILITY", driverPayableAccountCode)
+	if err != nil {
+		return nil, err
+	}
+	amountText := formatAmount(amount)
+	summary := "结算司机车费：" + strings.TrimSpace(driverName)
+	result, err := voucher.New().CreateWithTx(ctx, tx, &voucher.CreateInput{
+		VoucherDate: date,
+		VoucherType: voucherTypePayment,
+		Summary:     summary,
+		SourceType:  SourceTypeDriverSettlement,
+		SourceId:    sourceId,
+		CreatedBy:   createdBy,
+		Entries: []voucher.Entry{
+			{AccountCode: payable.Code, Direction: voucher.DirectionDebit, Amount: amountText, Summary: "冲减应付司机车费"},
+			{AccountCode: fund.LedgerCode, Direction: voucher.DirectionCredit, Amount: amountText, Summary: "支付司机车费"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &Result{VoucherId: result.VoucherId, VoucherNo: result.VoucherNo, PeriodCode: result.PeriodCode}, nil
 }
 
@@ -403,14 +495,9 @@ func (s *Service) resolveAccount(ctx context.Context, tx gdb.TX, category, prefe
 
 // receiptSummary 生成收款凭证摘要，例如「收到阳光美地整装定金」。
 func receiptSummary(in *Receipt) string {
-	project := strings.TrimSpace(in.ProjectName)
 	paymentType := strings.TrimSpace(in.PaymentType)
 
 	switch {
-	case project != "" && paymentType != "":
-		return truncate("收到"+project+paymentType, summaryMaxRunes)
-	case project != "":
-		return truncate("收到"+project+"项目款", summaryMaxRunes)
 	case paymentType != "":
 		return truncate("收到"+paymentType, summaryMaxRunes)
 	default:
@@ -418,16 +505,19 @@ func receiptSummary(in *Receipt) string {
 	}
 }
 
+func receiptCreditSummary(in *Receipt) string {
+	if in.RideOrderId > 0 {
+		return "冲减行程应收车费"
+	}
+	return "确认营业收入"
+}
+
 // payoutSummary 生成付款凭证摘要，例如「支付恒信建材材料款」。
 func payoutSummary(in *Payout) string {
 	payee := strings.TrimSpace(in.Payee)
-	project := strings.TrimSpace(in.ProjectName)
 	payoutType := strings.TrimSpace(in.PayoutType)
 
 	target := payee
-	if target == "" {
-		target = project
-	}
 
 	switch {
 	case target != "" && payoutType != "":

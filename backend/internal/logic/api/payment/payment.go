@@ -37,6 +37,7 @@ type DetailResult struct {
 
 // Form 收款记录新增 / 编辑入参。
 type Form struct {
+	RideOrderId   int64
 	Amount        float64
 	PaymentType   string
 	PaymentDate   string
@@ -160,6 +161,9 @@ func (p *Payment) Create(ctx context.Context, form *Form, userId uint) (id int64
 	}
 
 	err = defaultDao.ProjectPayment.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		if orderErr := p.ensureRideOrderReceivable(ctx, tx, form, 0); orderErr != nil {
+			return orderErr
+		}
 		if dupErr := p.ensureNotDuplicate(ctx, tx, data[defaultDao.ProjectPayment.Columns().PaymentDate], form.Amount, form.PaymentType); dupErr != nil {
 			return dupErr
 		}
@@ -205,6 +209,9 @@ func (p *Payment) Update(ctx context.Context, id int64, form *Form, userId uint)
 		if lockErr != nil {
 			return lockErr
 		}
+		if lockErr = p.ensureRideOrderReceivable(ctx, tx, form, id); lockErr != nil {
+			return lockErr
+		}
 
 		if oldVoucherId > 0 {
 			if lockErr = booking.New().Void(ctx, tx, oldVoucherId); lockErr != nil {
@@ -242,6 +249,30 @@ func (p *Payment) Update(ctx context.Context, id int64, form *Form, userId uint)
 
 	p.logReceipt(ctx, oplog.ActionUpdate, id, form, voucherNo)
 	return voucherNo, nil
+}
+
+func (p *Payment) ensureRideOrderReceivable(ctx context.Context, tx gdb.TX, form *Form, excludePaymentId int64) error {
+	if form.RideOrderId < 0 {
+		return gerror.New("行程订单ID不能小于0")
+	}
+	if form.RideOrderId == 0 {
+		return nil
+	}
+	order, err := tx.GetOne("SELECT final_fare,status FROM ride_order WHERE id=? AND company_id=? AND deleted_at IS NULL FOR UPDATE", form.RideOrderId, currentCompanyId(ctx))
+	if err != nil {
+		return gerror.Wrap(err, "校验行程订单失败")
+	}
+	if order.IsEmpty() || order["status"].String() != "completed" {
+		return gerror.New("收款只能关联当前公司的已完成行程")
+	}
+	paid, err := tx.GetValue("SELECT COALESCE(SUM(amount),0) FROM payment WHERE company_id=? AND ride_order_id=? AND deleted_at IS NULL AND id<>?", currentCompanyId(ctx), form.RideOrderId, excludePaymentId)
+	if err != nil {
+		return gerror.Wrap(err, "校验行程已收金额失败")
+	}
+	if paid.Float64()+form.Amount > order["final_fare"].Float64()+0.005 {
+		return gerror.New("关联收款金额超过该行程剩余应收车费")
+	}
+	return nil
 }
 
 // Delete 删除单条收款记录：先作废凭证，再软删除业务数据。
@@ -334,6 +365,7 @@ func (p *Payment) book(ctx context.Context, tx gdb.TX, id int64, form *Form, use
 
 	result, err := booking.New().PostReceipt(ctx, tx, &booking.Receipt{
 		SourceId:      id,
+		RideOrderId:   form.RideOrderId,
 		PaymentType:   form.PaymentType,
 		Date:          form.PaymentDate,
 		Amount:        form.Amount,
@@ -376,6 +408,7 @@ func (f *Form) toData() (g.Map, error) {
 		return nil, err
 	}
 	return g.Map{
+		cols.RideOrderId:   f.RideOrderId,
 		cols.Amount:        f.Amount,
 		cols.PaymentType:   f.PaymentType,
 		cols.PaymentDate:   paymentDate,
